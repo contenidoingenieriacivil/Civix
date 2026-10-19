@@ -26,7 +26,7 @@ export interface PaqueteProyecto {
       descripcion?: string; unidad?: string;
       /** Cantidad total; si hay "computo", se calcula de él. */
       cantidad?: number | string;
-      computo?: { descripcion: string; veces?: number | string; largo?: number | string; ancho?: number | string; alto?: number | string }[];
+      computo?: { descripcion: string; veces?: number | string; largo?: number | string; ancho?: number | string; alto?: number | string; cantidad?: number | string }[];
       /** Código o descripción del ítem en las bases de datos cargadas. */
       item?: string;
       precioUnitario?: number | string;
@@ -83,7 +83,7 @@ export function importarProyecto(entrada: unknown, bases: BaseDatos[]): { proyec
     (m.partidas ?? []).forEach((x, k) => {
       const etq = `módulo ${mk + 1}, partida ${k + 1} "${x?.descripcion ?? x?.item ?? ''}"`;
       let computo: LineaComputo[] | undefined;
-      if (x.computo?.length) computo = x.computo.map((l) => ({ descripcion: String(l.descripcion ?? ''), veces: n(l.veces) ?? undefined, largo: n(l.largo) ?? undefined, ancho: n(l.ancho) ?? undefined, alto: n(l.alto) ?? undefined }));
+      if (x.computo?.length) computo = x.computo.map((l) => ({ descripcion: String(l.descripcion ?? ''), veces: n(l.veces) ?? undefined, largo: n(l.largo) ?? undefined, ancho: n(l.ancho) ?? undefined, alto: n(l.alto) ?? undefined, ...(n(l.cantidad) !== undefined ? { cantidad: n(l.cantidad) as number } : {}) }));
       const cantidad = computo ? cantidadDeComputo(computo) : n(x.cantidad);
       if (cantidad === undefined || cantidad === null || cantidad < 0) return void informe.errores.push(`${etq}: falta una cantidad válida (cantidad o computo)`);
       let partida: Partida;

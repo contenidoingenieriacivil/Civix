@@ -32,6 +32,8 @@ export interface LineaComputo {
   largo?: number;
   ancho?: number;
   alto?: number;
+  /** Cantidad directa de la línea cuando no resulta de las dimensiones (p. ej. parcial copiado de un cómputo externo). */
+  cantidad?: number;
 }
 
 export interface Partida {

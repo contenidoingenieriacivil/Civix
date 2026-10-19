@@ -58,5 +58,6 @@ Para documentos con formato fijo se puede convertir sin IA, desde `tools/`:
 ```
 node tools/convertir-costos.mjs costos.md base.json precios.json
 node tools/convertir-presupuesto.mjs presupuesto.md proyecto.json "Nombre del proyecto"
+node tools/convertir-anexos.mjs presupuesto.md anexos.md salida "Nombre del proyecto"   # genera salida-base.json y salida-proyecto.json (precios unitarios, cómputos y especificaciones de los anexos)
 ```
 Los JSON resultantes se importan igual que los de una IA.

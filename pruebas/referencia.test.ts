@@ -145,3 +145,54 @@ const vacia = (): BaseDatos => ({ nombre: 'costos', moneda: 2, grupos: [], insum
     expect(p.insumos.every((i) => i.cotizacion === '2026-03-15')).toBe(true);
   });
 });
+
+/**
+ * Anexos de la tesis (Anexo 10 precios unitarios, Anexo 9 cómputos, Anexo 1 especificaciones):
+ *   node tools/convertir-anexos.mjs tesis.md anexos.md $D/tesis "Nombre"   y   CIVIX_REF_DIR=$D
+ */
+const hayAnexos = !!D && existsSync(join(D, 'tesis-base.json')) && existsSync(join(D, 'tesis-proyecto.json'));
+(hayAnexos ? describe : describe.skip)('anexos de la tesis: Civix recalcula los precios unitarios del Anexo 10', () => {
+  type Esp = { n: number; descripcion: string; unitario: number; parcial: number; conAnalisis: boolean };
+  const cargar = () => {
+    const b = importarPaquete(leer('tesis-base.json'), vacia());
+    const p = importarProyecto(leer('tesis-proyecto.json'), [b.base]);
+    return { b, p };
+  };
+
+  it('base y proyecto se importan sin errores', () => {
+    const { b, p } = cargar();
+    expect(b.informe.errores).toEqual([]);
+    expect(p.informe.errores).toEqual([]);
+    expect(p.informe.partidas).toBe(189);
+    expect(p.informe.conAnalisis).toBeGreaterThan(100);
+  });
+
+  it('cada partida con análisis tiene el mismo precio unitario que la tesis', () => {
+    const { p } = cargar();
+    const esp = leer<Esp[]>('tesis-esperado.json');
+    const c = calcularProyecto(p.proyecto!);
+    const todas = c.modulos.flatMap((m) => m.partidas);
+    expect(todas).toHaveLength(esp.length);
+    const con = todas.flatMap((x, k) => (esp[k]!.conAnalisis ? [{ x, e: esp[k]! }] : []));
+    const malas = con.filter(({ x, e }) => Math.abs(x.precioUnitario - e.unitario) > 0.011);
+    expect(con.length).toBeGreaterThan(140);
+    // El Anexo 10 está escaneado: unas pocas cantidades de insumo vienen redondeadas y el cálculo difiere en centavos o en < 1,1 %.
+    expect(malas.length).toBeLessThanOrEqual(6);
+    for (const { x, e } of malas) expect(Math.abs(x.precioUnitario - e.unitario) / e.unitario, `${e.n} ${e.descripcion}`).toBeLessThan(0.011);
+  });
+
+  it('los cómputos incorporados reproducen la cantidad del presupuesto', () => {
+    const { p } = cargar();
+    const esp = leer<Esp[]>('tesis-esperado.json');
+    const c = calcularProyecto(p.proyecto!);
+    const todas = c.modulos.flatMap((m) => m.partidas);
+    // tolerancia: 1,1 centavos de diferencia en el unitario por cantidad, o 0,6 % por cantidades redondeadas en el documento
+    const malas = todas.flatMap((x, k) => {
+      if (!x.partida.computo) return [];
+      const d = Math.abs(x.parcial - esp[k]!.parcial);
+      return d > Math.max(x.partida.cantidad * 0.012, esp[k]!.parcial * 0.006 + 0.011) ? [`${esp[k]!.n}: parcial civix ${x.parcial} / tesis ${esp[k]!.parcial}`] : [];
+    });
+    // El presupuesto de la tesis usa 500,14 m³ en «cama de arena» (partida 11) y su propio Anexo 9 suma 488,17: defecto del documento.
+    expect(malas.filter((m) => !m.startsWith('11:'))).toEqual([]);
+  });
+});

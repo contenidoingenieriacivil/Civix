@@ -1,6 +1,7 @@
 import type { Proyecto } from '../datos/modelo';
 import { montoALiteral } from '../nucleo/literal';
 import { ordenLogico } from '../nucleo/calculo';
+import { cantidadLinea } from '../nucleo/operaciones';
 import { desgloseInsumos, diagnosticar, resumenPorGrupo, resumenPorRubro, type ProyectoCalculado } from '../nucleo/presupuesto';
 import type { Rubro } from '../nucleo/tipos';
 import { documento, esc, fechaBo, num } from './formato';
@@ -167,7 +168,7 @@ export function reporteComputos(c: ProyectoCalculado): string {
       n++;
       const ls = x.partida.computo;
       const filas = ls?.length
-        ? ls.map((l, k) => `<tr><td class="c">${k + 1}</td><td>${esc(l.descripcion)}</td><td class="n">${l.veces !== undefined ? num(l.veces, 2) : ''}</td><td class="n">${l.largo !== undefined ? num(l.largo, 2) : ''}</td><td class="n">${l.ancho !== undefined ? num(l.ancho, 2) : ''}</td><td class="n">${l.alto !== undefined ? num(l.alto, 2) : ''}</td><td class="n">${num((l.veces ?? 1) * (l.largo ?? 1) * (l.ancho ?? 1) * (l.alto ?? 1), 2)}</td></tr>`).join('')
+        ? ls.map((l, k) => `<tr><td class="c">${k + 1}</td><td>${esc(l.descripcion)}</td><td class="n">${l.veces !== undefined ? num(l.veces, 2) : ''}</td><td class="n">${l.largo !== undefined ? num(l.largo, 2) : ''}</td><td class="n">${l.ancho !== undefined ? num(l.ancho, 2) : ''}</td><td class="n">${l.alto !== undefined ? num(l.alto, 2) : ''}</td><td class="n">${num(cantidadLinea(l), 2)}</td></tr>`).join('')
         : `<tr><td class="c">1</td><td colspan="5"><i>Cantidad directa (sin detalle de cómputo)</i></td><td class="n">${num(x.partida.cantidad, 2)}</td></tr>`;
       return `<h3 style="font-size:9.5pt;margin:4mm 0 1mm">${n}. ${esc(x.partida.descripcion)} <small>[${esc(x.partida.unidad)}]</small></h3>
 <table class="t"><thead><tr><th>N°</th><th>Parte</th><th>Veces</th><th>Largo</th><th>Ancho</th><th>Alto</th><th>Total</th></tr></thead><tbody>${filas}<tr class="sub"><td colspan="6" class="n">TOTAL</td><td class="n">${num(x.partida.cantidad, 2)}</td></tr></tbody></table>`;
