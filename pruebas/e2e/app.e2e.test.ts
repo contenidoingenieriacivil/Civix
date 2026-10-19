@@ -44,7 +44,7 @@ beforeAll(async () => {
 });
 afterAll(async () => { await navegador?.close(); await new Promise((r) => servidor?.httpServer.close(() => r(null))); });
 beforeEach(async () => {
-  const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
   page = await ctx.newPage();
   page.on('pageerror', (e) => { throw e; });
   await page.goto(URL_APP);
@@ -226,6 +226,85 @@ describe('interfaz de Civix', () => {
     await page.getByTestId('fila-partida').first().waitFor();
     expect(await totalGeneral()).toBe(total);
     expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('Mi obra de prueba');
+  });
+});
+
+const REF = process.env.CIVIX_REF_DIR;
+const hayRef = !!REF && existsSync(join(REF, 'proyecto.json'));
+
+async function pegarYAnalizar(json: string) {
+  await page.getByTestId('json-ia').fill(json);
+  await page.getByTestId('importar-json').click();
+  await page.getByTestId('resultado-importacion').waitFor();
+}
+
+describe('importar de IA: proyecto y actualización de precios', () => {
+  it('un proyecto en JSON se revisa antes de abrirse y calcula sus totales', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    await pegarYAnalizar(JSON.stringify({ civix: 1, tipo: 'proyecto', proyecto: { nombre: 'Obra de prueba', plantilla: 'SABS' },
+      modulos: [{ nombre: 'Preliminares', partidas: [{ descripcion: 'Letrero', unidad: 'pza', cantidad: 2, precioUnitario: 1500.5 },
+        { descripcion: 'Replanteo', unidad: 'm2', computo: [{ descripcion: 'Planta', veces: 1, largo: 10, ancho: 5 }], precioUnitario: 4.39, especificacion: 'Replanteo con teodolito.' }] }] }));
+    expect(await page.getByTestId('resultado-importacion').innerText()).toContain('2 partidas en 1 módulos');
+    expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('Proyecto nuevo'); // todavía no se aplicó
+    await page.getByTestId('abrir-proyecto-ia').click();
+    await pestana('inicio');
+    expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('Obra de prueba');
+    expect(await totalGeneral()).toContain('3.220,50'); // 2 × 1.500,50 + 50 × 4,39 = 3.001,00 + 219,50
+    await pestana('reportes');
+    await cmd('rep-computos');
+    await page.frameLocator('#vista-reporte').locator('h1', { hasText: 'CÓMPUTOS MÉTRICOS' }).waitFor();
+    await cmd('rep-esp');
+    expect(await page.frameLocator('#vista-reporte').locator('body').innerText()).toContain('Replanteo con teodolito.');
+  });
+
+  it('actualizar precios: exporta la lista, la IA responde, se revisa y se aplica solo lo marcado', async () => {
+    await pegarPaquete(PAQUETE);
+    await page.getByTestId('cerrar-pegar').click();
+    await page.getByTestId('fila-item').first().click();
+    await page.getByTestId('cantidad-nueva').fill('10');
+    await page.getByTestId('anadir-presupuesto').click();
+    await pestana('inicio');
+    const antes = await totalGeneral();
+    await cmd('actualizar-precios');
+    await page.getByTestId('copiar-insumos').click();
+    const exportada = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as { tipo: string; insumos: { descripcion: string; unidad: string; rubro: string; precioActual: number }[] };
+    expect(exportada.tipo).toBe('insumos');
+    expect(exportada.insumos.map((i) => i.descripcion)).toContain('Cemento portland IP-30');
+    // respuesta de la IA: mismos nombres y unidades, cemento +20 %, albañil +10 %, el resto sin cambio
+    const nuevos = exportada.insumos.map((i) => ({ descripcion: i.descripcion, unidad: i.unidad, rubro: i.rubro,
+      precio: i.descripcion.startsWith('Cemento') ? i.precioActual * 1.2 : i.descripcion === 'Albañil' ? i.precioActual * 1.1 : i.precioActual }));
+    await pegarYAnalizar(JSON.stringify({ civix: 1, tipo: 'precios', moneda: 'Bs', fecha: '2026-03-15', precios: nuevos }));
+    const tabla = page.getByTestId('tabla-cambios');
+    expect(await tabla.locator('tbody tr').count()).toBe(2);
+    expect(await tabla.innerText()).toMatch(/\+20,0 %/);
+    expect(await totalGeneral()).toBe(antes); // nada cambia hasta confirmar
+    await tabla.locator('tbody tr', { hasText: 'Albañil' }).getByRole('checkbox').uncheck(); // el usuario descarta el del albañil
+    await page.getByTestId('aplicar-precios').click();
+    const despues = await totalGeneral();
+    expect(despues).not.toBe(antes);
+    await pestana('base');
+    await page.getByTestId('ver-insumos').click();
+    expect(await page.locator('tr', { hasText: 'Albañil' }).locator('input').inputValue()).toBe('12,500'); // sigue igual en la base
+  });
+});
+
+(hayRef ? describe : describe.skip)('proyecto de referencia (Tolomosa Grande) en la interfaz', () => {
+  it('se importa desde el JSON y el total coincide con el documento (salvo el defecto del M21)', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    await pegarYAnalizar(readFileSync(join(REF!, 'proyecto.json'), 'utf8'));
+    expect(await page.getByTestId('resultado-importacion').innerText()).toContain('189 partidas en 21 módulos');
+    await page.getByTestId('abrir-proyecto-ia').click();
+    await pestana('inicio');
+    expect(await totalGeneral()).toContain('4.558.411,45'); // documento 4.555.157,44 + 3.254,00 que el documento no suma en M21
+    await page.getByTestId('modulo-2').click();
+    expect(await page.getByTestId('total-modulo').innerText()).toContain('1.930.949,00'); // M02 del documento
+    await pestana('reportes');
+    await cmd('rep-B-1');
+    const b1 = await page.frameLocator('#vista-reporte').locator('body').innerText();
+    expect(b1).toContain('1.930.949,00');
+    expect(b1).toMatch(/Son: Cuatro millones quinientos cincuenta y ocho mil cuatrocientos once 45\/100 Bolivianos/);
   });
 });
 

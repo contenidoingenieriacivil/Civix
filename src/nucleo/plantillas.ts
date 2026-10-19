@@ -55,7 +55,18 @@ export const PLANTILLA_COMPLETA_SIN_IVA: Plantilla = crear('Formato completo SIN
   ['Q', 'TOTAL ITEM', null, 'N', 17, true],
 ]);
 
+/** Solo costo directo: materiales + mano de obra + equipo + herramientas menores (6 % de la mano de obra). */
+export const PLANTILLA_COSTO_DIRECTO: Plantilla = crear('Costo directo', [
+  ['A', 'MATERIALES', null, '*', 1], ['B', 'MANO DE OBRA', null, '*', 2], ['C', 'EQUIPO Y MAQUINARIA', null, '*', 3],
+  ['D', 'TOTAL MATERIALES', null, 'A', 4, true], ['E', '', null, '', 5], ['F', '', null, '', 6],
+  ['G', 'TOTAL MANO DE OBRA', null, 'B', 7, true], ['H', 'Herramientas menores', 6, 'B', 8],
+  ['I', 'TOTAL HERRAMIENTAS Y EQUIPO', null, 'C+H', 9, true], ['J', 'COSTO DIRECTO', null, 'D+G+I', 10, true],
+  ['K', '', null, '', 11], ['L', '', null, '', 12], ['M', '', null, '', 13], ['N', '', null, '', 14],
+  ['O', '', null, '', 15], ['P', '', null, '', 16], ['Q', 'TOTAL ITEM', null, 'J', 17, true],
+]);
+
 export const PLANTILLAS_PREDEFINIDAS: Plantilla[] = [
+  PLANTILLA_COSTO_DIRECTO,
   PLANTILLA_SABS,
   PLANTILLA_COMPLETA_MAS_IVA,
   PLANTILLA_COMPLETA_SIN_IVA,

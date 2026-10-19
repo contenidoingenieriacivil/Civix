@@ -31,6 +31,14 @@ export interface Item {
   manoObra: Linea[];
   equipo: Linea[];
   apuntes?: string;
+  /** Código del ítem en el catálogo de origen (p. ej. "R052"). */
+  codigo?: string;
+  /** Sustituye porcentajes de la plantilla solo para este ítem (p. ej. { H: 0 } = sin herramientas). */
+  porcentajes?: Record<string, number>;
+  /** Precio unitario directo, sin análisis de insumos (partidas cotizadas o sin detalle). */
+  precioFijo?: number;
+  /** Especificación técnica redactada por el usuario. */
+  especificacion?: string;
 }
 
 /**

@@ -43,7 +43,7 @@ export function Presupuesto() {
                   <td className="c">{actual.indice}.{x.numero}</td>
                   <td>{x.partida.descripcion}</td>
                   <td className="c">{x.partida.unidad}</td>
-                  <td className="n"><Numero id="cantidad" valor={x.partida.cantidad} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.cantidad = n; })} /></td>
+                  <td className="n"><Numero id="cantidad" valor={x.partida.cantidad} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.cantidad = n; delete p.partidas[pos]!.computo; })} /></td>
                   <td className="n" title="Doble clic en la fila para ver el análisis">{num(x.precioUnitario)}</td>
                   <td className="n">{num(x.parcial)}</td>
                 </tr>

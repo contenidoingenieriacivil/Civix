@@ -26,6 +26,14 @@ export interface Modulo {
   fin: string | null;
 }
 
+export interface LineaComputo {
+  descripcion: string;
+  veces?: number;
+  largo?: number;
+  ancho?: number;
+  alto?: number;
+}
+
 export interface Partida {
   /** Posición (base 1) en la lista de módulos. */
   modulo: number;
@@ -35,6 +43,8 @@ export interface Partida {
   cantidad: number;
   grupo: number;
   item: Item;
+  /** Cómputo métrico: la cantidad es la suma de sus líneas (veces × largo × ancho × alto, según lo informado). */
+  computo?: LineaComputo[];
   /** Personas/equipos de trabajo simultáneos (acorta el plazo). Por defecto 1. */
   cuadrilla?: number;
   /** Posición (en su módulo) de la actividad previa; 0 = independiente; sin definir = la anterior. */

@@ -11,8 +11,13 @@ export interface PaqueteDatos {
   civix: 1;
   insumos?: { descripcion: string; unidad: string; rubro: string; precio: number | string; fecha?: string; grupo?: string }[];
   items?: {
-    descripcion: string; unidad: string; grupo?: string;
-    insumos: { descripcion: string; rendimiento: number | string; rubro?: string }[];
+    descripcion: string; unidad: string; grupo?: string; codigo?: string;
+    /** Sin análisis de insumos: precio unitario directo. */
+    precioUnitario?: number | string;
+    /** Sustituye porcentajes de la plantilla solo para este ítem, p. ej. { "H": 0 }. */
+    porcentajes?: Record<string, number>;
+    especificacion?: string;
+    insumos?: { descripcion: string; rendimiento: number | string; rubro?: string }[];
   }[];
 }
 
@@ -113,10 +118,14 @@ export function importarPaquete(entrada: unknown, base: BaseDatos): { base: Base
       lineas[candidatos[0]!.rubro].push({ insumo: candidatos[0]!.id, rendimiento: rend });
     }
     for (const r of ['M', 'O', 'E'] as Rubro[]) if (lineas[r].length > MAX_LINEAS[r]) { informe.errores.push(`${etq}: máximo ${MAX_LINEAS[r]} insumos de ${r === 'M' ? 'materiales' : r === 'O' ? 'mano de obra' : 'equipo'}`); ok = false; }
+    const fijo = x.precioUnitario === undefined ? undefined : aNumero(x.precioUnitario);
+    if (x.precioUnitario !== undefined && (fijo === null || fijo! < 0)) { informe.errores.push(`${etq}: precioUnitario no válido ("${x.precioUnitario}")`); ok = false; }
+    if (!(x.insumos?.length) && fijo === undefined) { informe.errores.push(`${etq}: no tiene insumos ni precioUnitario`); ok = false; }
     if (!ok) return;
     const existente = salida.items.findIndex((i) => sinAcentos(i.descripcion) === sinAcentos(x.descripcion));
     const item: Item = { id: existente >= 0 ? salida.items[existente]!.id : sigItem++, descripcion: x.descripcion.trim().slice(0, 70),
-      unidad: normalizarUnidad(x.unidad ?? '').slice(0, 5), grupo: grupoId(x.grupo), materiales: lineas.M, manoObra: lineas.O, equipo: lineas.E };
+      unidad: normalizarUnidad(x.unidad ?? '').slice(0, 5), grupo: grupoId(x.grupo), materiales: lineas.M, manoObra: lineas.O, equipo: lineas.E,
+      ...(x.codigo ? { codigo: x.codigo } : {}), ...(x.porcentajes ? { porcentajes: x.porcentajes } : {}), ...(fijo !== undefined ? { precioFijo: fijo! } : {}), ...(x.especificacion ? { especificacion: x.especificacion } : {}) };
     if (existente >= 0) { salida.items[existente] = item; informe.itemsReemplazados++; } else { salida.items.push(item); informe.itemsNuevos++; }
   });
 

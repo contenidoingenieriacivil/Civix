@@ -81,3 +81,10 @@ export function cambiarMoneda(p: Proyecto, factor: number, nuevaMoneda: number):
   for (const i of p.insumos) i.precio = redondear(i.precio * factor, 4);
   p.moneda = nuevaMoneda;
 }
+
+/** Cantidad de una línea de cómputo: producto de las dimensiones informadas (veces por defecto 1). */
+export const cantidadLinea = (l: { veces?: number; largo?: number; ancho?: number; alto?: number }): number =>
+  (l.veces ?? 1) * (l.largo ?? 1) * (l.ancho ?? 1) * (l.alto ?? 1);
+
+export const cantidadDeComputo = (ls: { veces?: number; largo?: number; ancho?: number; alto?: number }[]): number =>
+  ls.reduce((a, l) => a + cantidadLinea(l), 0);

@@ -129,3 +129,38 @@ export function reporteDesgloseInsumos(c: ProyectoCalculado): string {
   }).join('<br>');
   return documento('Desglose de insumos', `<h1>DESGLOSE GENERAL DE INSUMOS</h1><h2>(requerimiento total del proyecto)</h2>${cabecera(p)}${secciones}`);
 }
+
+/** Especificaciones técnicas: una por ítem distinto del proyecto, con las que aún faltan marcadas. */
+export function reporteEspecificaciones(c: ProyectoCalculado): string {
+  const p = c.proyecto;
+  const vistos = new Set<string>();
+  let n = 0, faltan = 0;
+  const bloques = c.modulos.flatMap((m) => m.partidas).filter((x) => { const k = `${x.partida.descripcion}|${x.partida.unidad}`; if (vistos.has(k)) return false; vistos.add(k); return true; })
+    .map((x) => {
+      const t = x.partida.item.especificacion?.trim();
+      if (!t) faltan++;
+      const cuerpo = t ? t.split(/\n{2,}/).map((par) => `<p>${esc(par).replace(/\n/g, '<br>')}</p>`).join('') : '<p class="falta"><i>(Especificación pendiente de redactar)</i></p>';
+      return `<div class="et"><h3>ÍTEM ${++n}. ${esc(x.partida.descripcion.toUpperCase())}</h3><p><b>Unidad de medida:</b> ${esc(x.partida.unidad)}</p>${cuerpo}</div>`;
+    }).join('');
+  const css = '<style>.et{margin-bottom:5mm;page-break-inside:avoid}.et h3{font-size:10pt;margin:0 0 1.5mm;border-bottom:.3mm solid #333}.et p{margin:1mm 0;text-align:justify}.falta{color:#b45309}</style>';
+  return documento('Especificaciones técnicas', `${css}<h1>ESPECIFICACIONES TÉCNICAS</h1><h2>${esc(p.nombre)}${faltan ? ` · ${faltan} de ${n} pendientes` : ''}</h2>${cabecera(p)}${bloques}`);
+}
+
+/** Cómputos métricos: líneas de medición de cada partida y su total. */
+export function reporteComputos(c: ProyectoCalculado): string {
+  const p = c.proyecto;
+  let n = 0;
+  const bloques = c.modulos.map((m) => {
+    const partidas = m.partidas.map((x) => {
+      n++;
+      const ls = x.partida.computo;
+      const filas = ls?.length
+        ? ls.map((l, k) => `<tr><td class="c">${k + 1}</td><td>${esc(l.descripcion)}</td><td class="n">${l.veces !== undefined ? num(l.veces, 2) : ''}</td><td class="n">${l.largo !== undefined ? num(l.largo, 2) : ''}</td><td class="n">${l.ancho !== undefined ? num(l.ancho, 2) : ''}</td><td class="n">${l.alto !== undefined ? num(l.alto, 2) : ''}</td><td class="n">${num((l.veces ?? 1) * (l.largo ?? 1) * (l.ancho ?? 1) * (l.alto ?? 1), 2)}</td></tr>`).join('')
+        : `<tr><td class="c">1</td><td colspan="5"><i>Cantidad directa (sin detalle de cómputo)</i></td><td class="n">${num(x.partida.cantidad, 2)}</td></tr>`;
+      return `<h3 style="font-size:9.5pt;margin:4mm 0 1mm">${n}. ${esc(x.partida.descripcion)} <small>[${esc(x.partida.unidad)}]</small></h3>
+<table class="t"><thead><tr><th>N°</th><th>Parte</th><th>Veces</th><th>Largo</th><th>Ancho</th><th>Alto</th><th>Total</th></tr></thead><tbody>${filas}<tr class="sub"><td colspan="6" class="n">TOTAL</td><td class="n">${num(x.partida.cantidad, 2)}</td></tr></tbody></table>`;
+    }).join('');
+    return `<h2><b>${esc(m.nombre)}</b></h2>${partidas}`;
+  }).join('');
+  return documento('Cómputos métricos', `<h1>CÓMPUTOS MÉTRICOS</h1><h2>${esc(p.nombre)}</h2>${cabecera(p)}${bloques}`);
+}

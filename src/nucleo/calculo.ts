@@ -70,6 +70,7 @@ export function sumaRubros(
 export function evaluarPlantilla(
   plantilla: Plantilla,
   rubros: Record<Rubro, number>,
+  porcentajes: Record<string, number> = {},
 ): ValoresParametros {
   const porLetra = new Map<string, Parametro>(plantilla.parametros.map((p) => [p.letra, p]));
   const hechos: ValoresParametros = {};
@@ -87,7 +88,8 @@ export function evaluarPlantilla(
       v = letra === 'A' ? rubros.M : letra === 'B' ? rubros.O : letra === 'C' ? rubros.E : 0;
     } else if (f !== '') {
       const base = terminosDeFormula(f).reduce((a, t) => a + t.signo * valor(t.letra), 0);
-      v = p.porcentaje === null ? base : (p.porcentaje / 100) * base;
+      const pct = porcentajes[letra] ?? p.porcentaje;
+      v = pct === null ? base : (pct / 100) * base;
     }
     enCurso.delete(letra);
     hechos[letra] = v;
@@ -107,7 +109,8 @@ export function calcularItem(
   incluirNoProductivos = false,
   decimalesPrecios = DECIMALES_PRECIOS,
 ): ResultadoApu {
-  const valores = evaluarPlantilla(plantilla, sumaRubros(item, insumos, incluirNoProductivos, decimalesPrecios));
+  if (item.precioFijo !== undefined) return { valores: { Q: item.precioFijo }, precioUnitario: redondear(item.precioFijo, decimales) };
+  const valores = evaluarPlantilla(plantilla, sumaRubros(item, insumos, incluirNoProductivos, decimalesPrecios), item.porcentajes);
   return { valores, precioUnitario: redondear(valores.Q ?? 0, decimales) };
 }
 

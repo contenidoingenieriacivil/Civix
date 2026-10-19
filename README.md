@@ -11,18 +11,21 @@ Análisis de precios unitarios y presupuestos de obra para Bolivia. App de escri
 | Proyectos | Módulos, planilla del presupuesto con cantidades editables, análisis de cada ítem (doble clic), deshacer/rehacer, guardado automático y archivos `.civix`; abre proyectos `.DDP` de PRESCOM |
 | Cronograma | Diagrama de Gantt por módulo con cuadrilla y predecesora editables, plazo = cantidad × rendimiento de mano de obra ÷ (horas/día × cuadrilla), calendario lunes–sábado configurable y **ruta crítica**; formulario **A-8** (horizontal, con barras y ruta crítica en rojo) |
 | Reportes (Bolivia, SABS) | **A-8** cronograma, **B-1** presupuesto con precio en literal y monto total en literal, **B-2** análisis de precios unitarios (una hoja por ítem), **B-3** precios elementales, **B-4** costo horario de equipos, resumen general (módulos, rubros, grupos) y desglose de insumos. Salida a PDF, impresión, HTML y Excel (.xlsx con fórmulas) |
-| IA sin conexión | *Datos*: la IA (Gemini, ChatGPT, Claude…) redacta un JSON con insumos e ítems, Civix lo valida (todo o nada) y lo importa. *Órdenes*: frases como «sube 5% el cemento» o JSON de órdenes, con **vista previa** y deshacer |
+| Cómputos y especificaciones | Se cargan con el proyecto (JSON de una IA); reportes «Cómputos métricos» y «Especificaciones técnicas» (marca las que faltan por redactar) |
+| IA sin conexión | *Datos, proyecto y precios*: la IA (Gemini, ChatGPT, Claude…) redacta un JSON; Civix lo valida (todo o nada), muestra qué cambiaría y recién entonces lo guarda. **Actualizar precios**: Civix exporta la lista de insumos del proyecto, la IA devuelve los precios nuevos de un PDF con esos nombres y unidades, y se aplican los que usted confirme. *Órdenes*: frases como «sube 5% el cemento» o JSON de órdenes, con **vista previa** y deshacer |
 
 ### Cómo trabajar con una IA
 1. En el panel **Asistente**, pulse «Copiar instrucciones de datos» y péguelas en su IA junto con las cotizaciones o planillas.
 2. Copie el JSON que devuelva y use **Base de datos → Pegar datos de IA**. Si hay errores, Civix los explica y no guarda nada.
 3. Para operar sobre el proyecto, escriba en el Asistente o pegue las órdenes que redactó la IA («Copiar instrucciones de órdenes»); pulse **Ver qué haría** y luego **Aplicar**.
 
+## Trabajar con IA
+Guía completa (formatos, orden, actualización de precios y calibración): [`docs/GUIA_IA.md`](docs/GUIA_IA.md).
+
 ## Lo que todavía no está
 - Flujos de personal y de fondos, plan de desembolsos y feriados en el calendario.
 - Gráficos, impresión por lotes y exportación a MS Project.
-- Cómputos métricos detallados por partida (la cantidad se ingresa directamente).
-- Especificaciones técnicas (se importan solo las bases; los textos RTF de las carpetas `_et` no se leen aún).
+- Edición de cómputos métricos y especificaciones dentro de la app (hoy se cargan por JSON desde una IA y se imprimen; los textos RTF de PRESCOM `_et` no se leen aún).
 - El cronograma reproduce ~78 % de las fechas del proyecto de ejemplo de PRESCOM (el original guarda rendimientos y fechas editados a mano; la regla de redondeo exacta de PRESCOM no pudo confirmarse).
 - SECON (seguimiento de obra): descartado por decisión del usuario.
 - El costo horario del B-4 usa el método habitual de depreciación + intereses + mantenimiento; no pudo contrastarse con PRESCOM porque los proyectos de ejemplo no traen equipos.
