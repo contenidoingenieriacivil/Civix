@@ -89,3 +89,39 @@ describe('reportes de especificaciones y cómputos', () => {
     expect(html).toContain('Cantidad directa');
   });
 });
+
+describe('proyecto con precios directos: qué falta y cómo lo dice cada formulario', () => {
+  const directo = importarProyecto(paquete([
+    { descripcion: 'Excavación', unidad: 'm3', cantidad: 100, precioUnitario: 25 },
+    { descripcion: 'Relleno', unidad: 'm3', cantidad: 50, precioUnitario: 20, duracion: 3, predecesor: 1 },
+  ]), []).proyecto!;
+  const c = calcularProyecto(directo);
+
+  it('diagnostica los datos faltantes', async () => {
+    const { diagnosticar } = await import('../src/nucleo/presupuesto');
+    const d = diagnosticar(c);
+    expect(d).toMatchObject({ partidas: 2, sinAnalisis: 2, sinPlazo: 1 });
+    expect(d.avisos.join(' ')).toMatch(/2 de 2 partidas tienen precio unitario directo.*B-2, B-3 y B-4 no pueden generarse/);
+    expect(d.avisos.join(' ')).toMatch(/1 de 2 partidas no tienen plazo/);
+  });
+
+  it('B-2, B-3 y B-4 explican que faltan los análisis en vez de mostrar tablas vacías', async () => {
+    const { formularioB2, formularioB3, formularioB4 } = await import('../src/reportes/formularios');
+    const b2 = formularioB2(c);
+    expect(b2).toContain('PRECIO UNITARIO DIRECTO (SIN ANÁLISIS)');
+    expect(b2).toContain('no tienen análisis de insumos');
+    expect(b2).not.toContain('1. MATERIALES');
+    expect(formularioB3(c)).toContain('no tiene insumos');
+    expect(formularioB4(c, [])).toContain('Sin equipos');
+  });
+
+  it('el plazo fijado a mano manda y las vinculadas se encadenan; las sin plazo se avisan en el A-8', async () => {
+    const { programar } = await import('../src/nucleo/cronograma');
+    const { formularioA8 } = await import('../src/reportes/cronograma');
+    const g = programar(directo).modulos[0]!.actividades;
+    expect(g[1]!.duracion).toBe(3);
+    expect(g[1]!.predecesor).toBe(1);
+    expect(g[1]!.inicio > g[0]!.fin).toBe(true);
+    expect(formularioA8(directo)).toContain('Plazos incompletos');
+  });
+});

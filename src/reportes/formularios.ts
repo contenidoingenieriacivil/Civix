@@ -1,7 +1,7 @@
 import type { Proyecto } from '../datos/modelo';
 import { montoALiteral } from '../nucleo/literal';
 import { ordenLogico } from '../nucleo/calculo';
-import { desgloseInsumos, resumenPorGrupo, resumenPorRubro, type ProyectoCalculado } from '../nucleo/presupuesto';
+import { desgloseInsumos, diagnosticar, resumenPorGrupo, resumenPorRubro, type ProyectoCalculado } from '../nucleo/presupuesto';
 import type { Rubro } from '../nucleo/tipos';
 import { documento, esc, fechaBo, num } from './formato';
 
@@ -37,13 +37,15 @@ export function formularioB1(c: ProyectoCalculado): string {
 <p><b>${esc(montoALiteral(c.total, MONEDA(p)))}</b></p><p class="nota">${NOTA_B1}</p>${firma('Firma del representante legal del proponente')}`);
 }
 
-/** Formulario B-2: análisis de precios unitarios de cada ítem (una hoja por ítem). */
+/** Formulario B-2: análisis de precios unitarios (una hoja por ítem con análisis; aparte, los de precio directo). */
 export function formularioB2(c: ProyectoCalculado): string {
   const p = c.proyecto;
   const d = c.decimales;
-  let n = 0;
-  const hojas = c.modulos.flatMap((m) => m.partidas).map((x) => {
-    n++;
+  const todas = c.modulos.flatMap((m) => m.partidas).map((x, k) => ({ x, n: k + 1 }));
+  const conAnalisis = (y: (typeof todas)[number]) => y.x.partida.item.precioFijo === undefined && !y.x.partida.sinDetalle && y.x.partida.item.materiales.length + y.x.partida.item.manoObra.length + y.x.partida.item.equipo.length > 0;
+  const con = todas.filter(conAnalisis);
+  const sin = todas.filter((y) => !conAnalisis(y));
+  const hojas = con.map(({ x, n }) => {
     const v = x.apu.valores;
     const lineas = (titulo: string, ls: typeof x.partida.item.materiales, total: number) => {
       const filas = ls.map((l) => {
@@ -56,7 +58,7 @@ export function formularioB2(c: ProyectoCalculado): string {
     const incid = ordenLogico(p.plantilla)
       .filter((q) => !['A', 'B', 'C', 'Q'].includes(q.letra) && q.formula.trim() !== '')
       .map((q) => {
-        const pct = q.porcentaje === null ? '' : ` (${num(q.porcentaje, 2)}%)`;
+        const pct = q.porcentaje === null ? '' : ` (${num(x.partida.item.porcentajes?.[q.letra] ?? q.porcentaje, 2)}%)`;
         return `<tr class="${q.resaltar ? 'sub' : ''}"><td colspan="4">${esc(q.descripcion)}${pct}</td><td class="n">${num(v[q.letra] ?? 0, d)}</td></tr>`;
       }).join('');
     return `<div class="pagina"><h1>FORMULARIO B-2</h1><h2>ANÁLISIS DE PRECIOS UNITARIOS</h2>${cabecera(p)}
@@ -66,7 +68,14 @@ ${lineas('1. MATERIALES', x.partida.item.materiales, v.A ?? 0)}${lineas('2. MANO
 ${incid}<tr class="tot"><td colspan="4">TOTAL PRECIO UNITARIO ADOPTADO</td><td class="n">${num(x.precioUnitario, d)}</td></tr></tbody></table>
 <p class="nota">${NOTA_B2}</p>${firma('Firma del representante legal del proponente')}</div>`;
   }).join('');
-  return documento('Formulario B-2', hojas);
+  const aviso = sin.length
+    ? `<div class="aviso"><b>Datos que faltan:</b> ${sin.length} de ${todas.length} partidas tienen precio unitario directo y <b>no tienen análisis de insumos</b> (materiales, mano de obra, equipo). ${con.length ? '' : 'Por eso este proyecto no tiene hojas de análisis. '}Cargue el análisis de precios unitarios (Importar de IA → «Instrucciones: datos») y referencie esos ítems en el proyecto.</div>`
+    : '';
+  const directas = sin.length
+    ? `<div class="pagina"><h1>FORMULARIO B-2</h1><h2>PARTIDAS CON PRECIO UNITARIO DIRECTO (SIN ANÁLISIS)</h2>${cabecera(p)}${aviso}
+<table class="t"><thead><tr><th>Ítem</th><th>Descripción</th><th>Unidad</th><th>Precio unitario adoptado</th></tr></thead><tbody>${sin.map(({ x, n }) => `<tr><td class="c">${n}</td><td>${esc(x.partida.descripcion)}</td><td class="c">${esc(x.partida.unidad)}</td><td class="n">${num(x.precioUnitario, d)}</td></tr>`).join('')}</tbody></table></div>`
+    : '';
+  return documento('Formulario B-2', hojas + directas);
 }
 
 const RUBROS: [Rubro, string][] = [['M', 'MATERIALES'], ['O', 'MANO DE OBRA'], ['E', 'EQUIPO, MAQUINARIA Y HERRAMIENTAS']];
@@ -79,7 +88,9 @@ export function formularioB3(c: ProyectoCalculado): string {
     const filas = des[r].map((f, k) => `<tr><td class="c">${k + 1}</td><td>${esc(f.insumo.descripcion)}</td><td class="c">${esc(f.insumo.unidad)}</td><td class="n">${num(f.insumo.precio, 3)}</td></tr>`).join('');
     return des[r].length ? `<h2><b>${nombre}</b></h2><table class="t"><thead><tr><th>N°</th><th>DESCRIPCIÓN</th><th>UNIDAD</th><th>PRECIO UNITARIO</th></tr></thead><tbody>${filas}</tbody></table>` : '';
   }).join('<br>');
-  return documento('Formulario B-3', `<h1>FORMULARIO B-3</h1><h2>(Precios Unitarios Elementales)</h2>${cabecera(p)}${secciones}<p class="nota">${NOTA_B3}</p>${firma('Firma del representante legal del proponente')}`);
+  const vacio = RUBROS.every(([r]) => des[r].length === 0);
+  const aviso = vacio ? '<div class="aviso"><b>Datos que faltan:</b> el proyecto no tiene insumos (materiales, mano de obra ni equipo) porque sus partidas no tienen análisis de precios unitarios. El formulario B-3 se arma con los insumos de esos análisis. Cargue el análisis (Importar de IA → «Instrucciones: datos») y referencie los ítems en el proyecto.</div>' : '';
+  return documento('Formulario B-3', `<h1>FORMULARIO B-3</h1><h2>(Precios Unitarios Elementales)</h2>${cabecera(p)}${aviso}${secciones}<p class="nota">${NOTA_B3}</p>${firma('Firma del representante legal del proponente')}`);
 }
 
 /** Costo horario de un equipo: datos para el formulario B-4. */
@@ -99,7 +110,8 @@ export function formularioB4(c: ProyectoCalculado, equipos: CostoEquipo[]): stri
   const p = c.proyecto;
   const d = c.decimales;
   const filas = equipos.map((e) => `<tr><td>${esc(e.descripcion)}</td><td class="n">${num(e.potencia, 1)}</td><td class="n">${num(e.basico, d)}</td><td class="n">${num(e.mantenimiento, d)}</td><td class="n">${num(e.combustibles, d)}</td><td class="n">${num(e.otros, d)}</td><td class="n"><b>${num(totalEquipo(e), d)}</b></td></tr>`).join('');
-  return documento('Formulario B-4', `<h1>FORMULARIO B-4</h1><h2>Costo de trabajo de los equipos</h2>${cabecera(p)}
+  const avisoB4 = equipos.length ? '' : '<div class="aviso"><b>Sin equipos:</b> ninguna partida del proyecto usa equipo o maquinaria en su análisis de precios unitarios. Si el proyecto tiene precios directos, cargue los análisis para obtener el costo horario de los equipos.</div>';
+  return documento('Formulario B-4', `<h1>FORMULARIO B-4</h1><h2>Costo de trabajo de los equipos</h2>${cabecera(p)}${avisoB4}
 <table class="t"><thead><tr><th>Descripción</th><th>Potencia</th><th>Básico</th><th>Mantenimiento</th><th>Combustibles</th><th>Otros</th><th>TOTAL</th></tr></thead><tbody>${filas}</tbody></table><p class="nota">${NOTA_B4}</p>${firma('Firma del representante legal del proponente')}`);
 }
 

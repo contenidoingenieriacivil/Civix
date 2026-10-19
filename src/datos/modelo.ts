@@ -45,6 +45,8 @@ export interface Partida {
   item: Item;
   /** Cómputo métrico: la cantidad es la suma de sus líneas (veces × largo × ancho × alto, según lo informado). */
   computo?: LineaComputo[];
+  /** Plazo en días laborables fijado a mano; sustituye al calculado con la mano de obra (útil con precio directo). */
+  duracion?: number;
   /** Personas/equipos de trabajo simultáneos (acorta el plazo). Por defecto 1. */
   cuadrilla?: number;
   /** Posición (en su módulo) de la actividad previa; 0 = independiente; sin definir = la anterior. */

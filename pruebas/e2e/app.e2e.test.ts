@@ -312,6 +312,30 @@ describe('uso real: los archivos entregados y los botones equivocados', () => {
   });
 });
 
+describe('proyecto con precios directos en la interfaz', () => {
+  it('los formularios dicen qué datos faltan y el plazo se puede escribir a mano', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    await pegarYAnalizar(JSON.stringify({ civix: 1, tipo: 'proyecto', proyecto: { nombre: 'Directo', plantilla: 'SABS' },
+      modulos: [{ nombre: 'Obras', partidas: [{ descripcion: 'Excavación', unidad: 'm3', cantidad: 100, precioUnitario: 25 }, { descripcion: 'Relleno', unidad: 'm3', cantidad: 50, precioUnitario: 20 }] }] }));
+    await page.getByTestId('abrir-proyecto-ia').click();
+    await pestana('reportes');
+    await cmd('rep-B-2');
+    expect(await page.getByTestId('diagnostico').innerText()).toMatch(/2 de 2 partidas tienen precio unitario directo/);
+    expect(await page.frameLocator('#vista-reporte').locator('body').innerText()).toContain('no tienen análisis de insumos');
+    await cmd('rep-B-3');
+    expect(await page.frameLocator('#vista-reporte').locator('body').innerText()).toContain('no tiene insumos');
+    await pestana('cronograma');
+    expect(await page.getByTestId('aviso-plazos').innerText()).toMatch(/2 actividades sin plazo/);
+    const dias = page.getByTestId('duracion').first();
+    await dias.fill('10');
+    await dias.press('Enter');
+    expect(await page.getByTestId('aviso-plazos').innerText()).toMatch(/1 actividades sin plazo/);
+    await cmd('ver-a8');
+    expect(await page.frameLocator('#vista-reporte').locator('body').innerText()).toContain('Plazos incompletos');
+  });
+});
+
 describe('importar de IA: proyecto y actualización de precios', () => {
   it('un proyecto en JSON se revisa antes de abrirse y calcula sus totales', async () => {
     await pestana('base');
@@ -391,7 +415,7 @@ describe('cronograma', () => {
     await page.getByTestId('anadir-presupuesto').click();
     await pestana('cronograma');
     await page.getByTestId('fila-actividad').first().waitFor();
-    const dias = async () => Number(await page.getByTestId('fila-actividad').first().locator('td').nth(2).innerText());
+    const dias = async () => Number(await page.getByTestId('fila-actividad').first().locator('td').nth(2).locator('input').inputValue());
     const antes = await dias();
     expect(antes).toBeGreaterThan(5);
     expect(await page.locator('[data-critica="true"]').count()).toBe(1);

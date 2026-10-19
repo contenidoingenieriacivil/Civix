@@ -1,6 +1,6 @@
 import { Checkbox, Input } from '@fluentui/react-components';
 import { useMemo } from 'react';
-import { CRONOGRAMA_DEFECTO, programar } from '../../nucleo/cronograma';
+import { CRONOGRAMA_DEFECTO, programar, tienePlazo } from '../../nucleo/cronograma';
 import { barra, mesesDelPrograma } from '../../reportes/cronograma';
 import { fechaBo } from '../../reportes/formato';
 import { cambiar, useEstado } from '../almacen';
@@ -13,6 +13,7 @@ export function CronogramaPantalla() {
   const meses = mesesDelPrograma(g);
   const total = Math.max(1, g.diasCalendario);
   const cfg = proyecto.cronograma ?? CRONOGRAMA_DEFECTO;
+  const sinPlazo = g.modulos.flatMap((m) => m.actividades).filter((a) => !tienePlazo(a.partida)).length;
   const poner = (c: Partial<typeof cfg>) => cambiar((p) => { p.cronograma = { ...(p.cronograma ?? CRONOGRAMA_DEFECTO), ...c }; });
 
   return (
@@ -23,6 +24,7 @@ export function CronogramaPantalla() {
         <Checkbox label="Rendimiento máximo de la mano de obra" checked={cfg.rendimientoMaximo} onChange={(_, d) => poner({ rendimientoMaximo: !!d.checked })} />
         <span data-testid="plazo" className="literal">{g.inicio ? `Inicio ${fechaBo(g.inicio)} · Conclusión ${fechaBo(g.fin)} · ${g.diasCalendario} días calendario` : 'Sin actividades'}</span>
       </div>
+      {sinPlazo > 0 && <div className="bienvenida" data-testid="aviso-plazos"><b>{sinPlazo} actividades sin plazo.</b> No tienen días fijados ni mano de obra en su análisis, así que se asume 1 día. Escriba los días en la columna «Días» (se guardan con el proyecto) o impórtelos con el campo «duracion».</div>}
       <div className="tabla-contenedor">
         <table className="grilla gantt" data-testid="tabla-gantt">
           <thead><tr><th style={{ width: 52 }}>N°</th><th>Actividad</th><th style={{ width: 52 }}>Días</th><th style={{ width: 66 }}>Cuadrilla</th><th style={{ width: 60 }}>Pred.</th><th style={{ width: 84 }}>Inicio</th><th style={{ width: 84 }}>Fin</th>
@@ -35,7 +37,7 @@ export function CronogramaPantalla() {
                 const b = barra(g, a.inicio, a.fin);
                 return (
                   <tr key={pos} data-testid="fila-actividad">
-                    <td className="c">{a.modulo}.{a.posicion}</td><td>{a.partida.descripcion}</td><td className="n">{a.duracion}</td>
+                    <td className="c">{a.modulo}.{a.posicion}</td><td>{a.partida.descripcion}</td><td className="n"><Numero id="duracion" ancho={52} decimales={0} valor={a.duracion} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.duracion = Math.max(1, Math.round(n)); })} /></td>
                     <td className="n"><Numero id="cuadrilla" ancho={52} decimales={0} valor={a.partida.cuadrilla ?? 1} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.cuadrilla = Math.max(1, Math.round(n)); })} /></td>
                     <td className="n"><Numero id="predecesor" ancho={46} decimales={0} valor={a.predecesor} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.predecesor = Math.round(n); })} /></td>
                     <td className="c">{fechaBo(a.inicio)}</td><td className="c">{fechaBo(a.fin)}</td>

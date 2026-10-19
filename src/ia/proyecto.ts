@@ -31,6 +31,11 @@ export interface PaqueteProyecto {
       item?: string;
       precioUnitario?: number | string;
       especificacion?: string;
+      /** Plazo en días laborables (si no hay análisis con mano de obra) y vínculos del cronograma. */
+      duracion?: number | string;
+      /** Posición (1, 2, 3…) de la partida previa dentro del mismo módulo; 0 = independiente. */
+      predecesor?: number | string;
+      cuadrilla?: number | string;
     }[];
   }[];
 }
@@ -99,6 +104,10 @@ export function importarProyecto(entrada: unknown, bases: BaseDatos[]): { proyec
         informe.precioDirecto++;
       }
       if (computo) partida.computo = computo;
+      const dur = n(x.duracion), pred = n(x.predecesor), cuad = n(x.cuadrilla);
+      if (dur) partida.duracion = dur;
+      if (pred !== undefined && pred !== null && pred >= 0) partida.predecesor = Math.round(pred);
+      if (cuad && cuad >= 1) partida.cuadrilla = Math.round(cuad);
       if (x.especificacion) partida.item.especificacion = x.especificacion;
       informe.partidas++;
     });
@@ -120,7 +129,8 @@ export const INSTRUCCIONES_PROYECTO = `Convierte mis cómputos métricos, especi
       "partidas": [
         { "item": "R052", "descripcion": "Replanteo y trazado de superficie", "unidad": "m2",
           "computo": [ { "descripcion": "Planta de tratamiento", "veces": 1, "largo": 120, "ancho": 95.2 } ],
-          "especificacion": "Texto de la especificación técnica del ítem…" },
+          "especificacion": "Texto de la especificación técnica del ítem…",
+          "duracion": 12, "predecesor": 0 },
         { "descripcion": "Letrero de obra", "unidad": "pza", "cantidad": 1, "precioUnitario": 2944.41 }
       ] } ]
 }
@@ -128,5 +138,6 @@ export const INSTRUCCIONES_PROYECTO = `Convierte mis cómputos métricos, especi
 Reglas:
 - "item": código (p. ej. R052) o descripción EXACTA de un ítem de mis bases de datos; así Civix toma su análisis de precios unitarios (B-2). Si el ítem no existe en mis bases, NO lo inventes: dame "precioUnitario" directo si lo conozco, o déjalo fuera y avísame al final.
 - Cantidad: usa "cantidad" (total) o "computo" (líneas con veces, largo, ancho, alto; Civix multiplica lo informado y suma las líneas). Las unidades deben ser coherentes (m → largo; m² → largo×ancho; m³ → largo×ancho×alto).
+- Cronograma: "duracion" son días laborables (obligatorio si la partida no tiene análisis con mano de obra); "predecesor" es la posición de la partida previa en su módulo (0 = empieza con el módulo). Si el documento trae el cronograma (MS Project, Excel), úsalo; si no, omite estos campos y no los inventes.
 - Respeta el orden y los módulos (capítulos) de mi presupuesto. No cambies descripciones. Números con punto decimal.
 - "plantilla": "Normas básicas del SABS" (licitaciones públicas, con IVA 14,94 % e IT 3,09 %), "Costo directo" o "Formato completo más IVA".`;

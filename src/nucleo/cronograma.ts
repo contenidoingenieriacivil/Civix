@@ -68,6 +68,9 @@ export function indiceLaborable(iso: string, n: number): number {
   return Math.floor(d / 7) * n + Math.min(d % 7, n);
 }
 
+/** ¿El plazo de esta partida tiene fundamento (días fijados o mano de obra en su análisis)? Si no, se asume 1 día. */
+export const tienePlazo = (p: Partida): boolean => (p.duracion !== undefined && p.duracion > 0) || p.item.manoObra.some((l) => l.rendimiento > 0);
+
 /** Rendimiento de mano de obra por unidad de ítem (horas): promedio o máximo de sus obreros. */
 export function rendimientoManoObra(p: Partida, max: boolean): number {
   const r = p.item.manoObra.map((l) => l.rendimiento).filter((x) => x > 0);
@@ -77,6 +80,7 @@ export function rendimientoManoObra(p: Partida, max: boolean): number {
 
 /** Duración en días laborables: cantidad × horas/unidad ÷ (horas por día × cuadrilla), redondeada, mínimo 1. */
 export function duracionDias(p: Partida, cfg: ConfigCronograma): number {
+  if (p.duracion !== undefined && p.duracion > 0) return Math.max(1, Math.round(p.duracion));
   const horas = p.cantidad * rendimientoManoObra(p, cfg.rendimientoMaximo);
   return Math.max(1, Math.round(horas / (cfg.horasDia * Math.max(1, p.cuadrilla ?? 1))));
 }

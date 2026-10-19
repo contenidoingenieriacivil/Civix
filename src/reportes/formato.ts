@@ -32,6 +32,8 @@ tr.tot td { font-weight: bold; background: #dcdcdc; }
 .nota { margin-top: 4mm; font-size: 8pt; }
 .firma { margin-top: 18mm; text-align: center; font-size: 8pt; }
 .firma div { display: inline-block; border-top: 0.3mm solid #000; padding-top: 1mm; min-width: 70mm; }
+.aviso { border: 0.4mm solid #b45309; background: #fffbeb; padding: 2.5mm 3mm; margin: 3mm 0; font-size: 8.5pt; }
+.aviso b { color: #92400e; }
 .pagina { page-break-after: always; }
 @media screen { html { background: #d1d5db; } body { background: #fff; max-width: 205mm; margin: 10px auto; padding: 12mm; box-shadow: 0 1px 6px rgba(0,0,0,.25); } .pagina { border-bottom: 1px dashed #bbb; margin-bottom: 8mm; padding-bottom: 6mm; } }
 .pagina:last-child { page-break-after: auto; }

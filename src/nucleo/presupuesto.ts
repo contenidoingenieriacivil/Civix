@@ -106,3 +106,31 @@ export function costosEquipos(c: ProyectoCalculado): CostoEquipo[] {
       : { descripcion: insumo.descripcion, potencia: 0, basico: insumo.precio, mantenimiento: 0, combustibles: 0, otros: 0 };
   });
 }
+
+export interface Diagnostico {
+  partidas: number;
+  sinAnalisis: number; // precio directo: sin B-2/B-3/B-4
+  sinPlazo: number; // sin días ni mano de obra: A-8 asume 1 día
+  sinEspecificacion: number;
+  sinComputo: number;
+  /** Mensajes legibles, uno por problema que afecte a algún formulario. */
+  avisos: string[];
+}
+
+/** Qué datos le faltan al proyecto para que cada formulario salga completo. */
+export function diagnosticar(c: ProyectoCalculado): Diagnostico {
+  const ps = c.modulos.flatMap((m) => m.partidas.map((x) => x.partida));
+  const analisis = (x: (typeof ps)[number]) => x.item.precioFijo === undefined && !x.sinDetalle && (x.item.materiales.length + x.item.manoObra.length + x.item.equipo.length) > 0;
+  const d: Diagnostico = {
+    partidas: ps.length,
+    sinAnalisis: ps.filter((x) => !analisis(x)).length,
+    sinPlazo: ps.filter((x) => !((x.duracion ?? 0) > 0 || x.item.manoObra.some((l) => l.rendimiento > 0))).length,
+    sinEspecificacion: ps.filter((x) => !x.item.especificacion?.trim()).length,
+    sinComputo: ps.filter((x) => !x.computo?.length).length,
+    avisos: [],
+  };
+  if (d.partidas && d.sinAnalisis) d.avisos.push(`${d.sinAnalisis} de ${d.partidas} partidas tienen precio unitario directo, sin análisis de insumos: los formularios B-2, B-3 y B-4 ${d.sinAnalisis === d.partidas ? 'no pueden generarse' : 'quedan incompletos'}. Cargue el análisis de precios unitarios (Importar de IA → «Instrucciones: datos») y vuelva a importar el proyecto referenciando esos ítems.`);
+  if (d.partidas && d.sinPlazo) d.avisos.push(`${d.sinPlazo} de ${d.partidas} partidas no tienen plazo (ni días fijados ni mano de obra): el cronograma A-8 les asume 1 día. Escriba los días en Cronograma → columna «Días», o impórtelos con «duracion».`);
+  if (d.partidas && d.sinEspecificacion) d.avisos.push(`${d.sinEspecificacion} de ${d.partidas} partidas no tienen especificación técnica.`);
+  return d;
+}
