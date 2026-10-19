@@ -1,0 +1,61 @@
+# Compila Civix para Windows 11 (x64), ejecuta las pruebas y publica el instalador en "Releases".
+# Se ejecuta con cada push a main o a la rama de desarrollo, y a mano desde Actions → "Run workflow".
+name: Compilar Civix
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compilar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Pruebas e instalador (Windows)
+    runs-on: windows-latest
+    env:
+      VERSION_APP: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm version $env:VERSION_APP --no-git-tag-version --allow-same-version
+        shell: pwsh
+      - name: Tipos y pruebas unitarias
+        run: |
+          npm run typecheck
+          npm test
+      - name: Pruebas de interfaz (Chromium)
+        run: |
+          npx playwright-core install chromium
+          npm run e2e
+      - name: Instalador de Windows
+        run: npm run dist
+      - name: Prueba de arranque del ejecutable empaquetado
+        shell: pwsh
+        run: |
+          $env:CIVIX_SMOKE = '1'
+          $p = Start-Process -FilePath 'release/win-unpacked/Civix.exe' -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw "Civix.exe no arrancó correctamente (código $($p.ExitCode))" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Civix-Windows
+          path: |
+            release/Civix-Instalador-*.exe
+            release/Civix-*-x64.zip
+      - name: Publicar en Releases
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_APP }}
+          name: Civix ${{ env.VERSION_APP }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          files: |
+            release/Civix-Instalador-*.exe
+            release/Civix-*-x64.zip

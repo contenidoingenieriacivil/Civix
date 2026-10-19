@@ -1,0 +1,78 @@
+{
+  "name": "civix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Civix: análisis de precios unitarios y presupuestos de obra para Bolivia",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite",
+    "build": "vite build",
+    "electron": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win nsis --x64 --publish never",
+    "e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "exceljs": "^4.4.0",
+    "playwright-core": "^1.64.1",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "^9.74.9",
+    "@fluentui/react-icons": "^2.0.344",
+    "fflate": "^0.8.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "main": "electron/main.cjs",
+  "author": "Civix",
+  "build": {
+    "appId": "bo.civix.app",
+    "productName": "Civix",
+    "copyright": "Civix",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json",
+      "!**/node_modules/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Civix-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "language": "3082",
+      "shortcutName": "Civix",
+      "createDesktopShortcut": true,
+      "artifactName": "Civix-Instalador-${version}.${ext}"
+    }
+  }
+}
