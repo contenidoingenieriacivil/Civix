@@ -8,6 +8,7 @@ import { aplicarActualizacion, exportarInsumosParaIA, planificarActualizacion } 
 import { calcularItem } from '../src/nucleo/calculo';
 import { montoALiteral } from '../src/nucleo/literal';
 import { calcularProyecto } from '../src/nucleo/presupuesto';
+import { programar } from '../src/nucleo/cronograma';
 import { PLANTILLA_COSTO_DIRECTO } from '../src/nucleo/plantillas';
 import { formularioB1 } from '../src/reportes/formularios';
 import { num } from '../src/reportes/formato';
@@ -194,5 +195,16 @@ const hayAnexos = !!D && existsSync(join(D, 'tesis-base.json')) && existsSync(jo
     });
     // El presupuesto de la tesis usa 500,14 m³ en «cama de arena» (partida 11) y su propio Anexo 9 suma 488,17: defecto del documento.
     expect(malas.filter((m) => !m.startsWith('11:'))).toEqual([]);
+  });
+});
+
+/** Con el cronograma del Gantt de la tesis transcrito (tools/aplicar-cronograma.mjs → tesis-proyecto-gantt.json). */
+(hayAnexos && existsSync(join(D!, 'tesis-proyecto-gantt.json')) ? describe : describe.skip)('cronograma A-8 de la tesis (diagrama de Gantt de MS Project)', () => {
+  it('el plazo total coincide con los 506 días calendario de la tesis (±1 %) y no queda ninguna partida sin plazo', () => {
+    const b = importarPaquete(leer('tesis-base.json'), vacia());
+    const p = importarProyecto(leer('tesis-proyecto-gantt.json'), [b.base]).proyecto!;
+    expect(p.partidas.every((x) => (x.duracion ?? 0) > 0)).toBe(true);
+    const g = programar(p);
+    expect(Math.abs(g.diasCalendario - 506) / 506).toBeLessThan(0.01);
   });
 });

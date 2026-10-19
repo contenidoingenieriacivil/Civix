@@ -24,6 +24,10 @@ export interface Modulo {
   nombre: string;
   inicio: string | null;
   fin: string | null;
+  /** Módulo (posición, base 1) tras cuyo fin empieza este; por defecto, el módulo anterior de la lista. */
+  despuesDe?: number;
+  /** Con `despuesDe`: posición (base 1) de la actividad de ese módulo tras cuyo fin empieza este, en vez de su fin. */
+  despuesDeActividad?: number;
 }
 
 export interface LineaComputo {

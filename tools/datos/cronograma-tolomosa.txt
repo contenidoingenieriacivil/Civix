@@ -1,0 +1,193 @@
+# Cronograma de la tesis «Alcantarillado sanitario y PTAR - Tolomosa Grande» (diagrama de Gantt de MS Project, p. 165-170).
+# Cada línea: módulo del presupuesto | id en el diagrama | días | actividad | [id de la predecesora; 0 = ninguna; por defecto la fila anterior del módulo]
+# Duración total del proyecto según la tesis: 506 días calendario.
+1|2|3.17|Nivelación del terreno y retiro de capa vegetal
+1|3|5.61|Instalación de faenas
+1|4|0.17|Letrero de obras (lona PVC)
+1|5|0.83|Cinta de señalización amarilla
+1|6|0.38|Placa entrega de obra s/diseño
+2|8|17.09|Replanteo y control de tendido de tubería
+2|9|10.15|Remoción y reparación de empedrado
+2|10|12.57|Rotura de pavimento flexible
+2|11|114.35|Excavación de suelo semi duro c/maquinaria hasta 10 m
+2|12|62.15|Provisión de cama de arena asiento tubería
+2|13|17.51|Provisión y colocado tubería PVC SDR41 DN 150 mm
+2|14|25.35|Provisión y colocado tubería PVC SDR41 DN 200 mm
+2|15|16.05|Entibado continuo
+2|16|47.17|Relleno y compactado de zanjas tierra cernida
+2|17|15.89|Relleno y compactado de zanjas con saltarín
+2|18|22.78|Prueba hidráulica de tubería + prueba de espejo
+2|19|45.41|Reposición de pavimento flexible
+2|20|20.53|Cámara de inspección H°A° prefabricado h=0-2.00 m|11
+2|21|9|Cámara de inspección H°A° prefabricado h=2.01-2.50 m
+2|22|22.5|Cámara de inspección H°A° prefabricado h=2.51-3.00 m
+2|23|7.05|Retiro y limpieza de escombros con volqueta|19
+3|25|7.17|Replanteo y control de tendido de tubería
+3|26|0.17|Cinta de seguridad para excavación
+3|27|32.25|Excavación manual terreno semiduro
+3|28|17.2|Provisión tendido de tubería PVC SDR35 DN 100 mm
+3|29|4.3|Provisión y colocado cámara de H°A° prefabricada
+3|30|12.9|Relleno y compactado de zanjas tierra cernida
+3|31|14.51|Relleno y compactado de zanjas con saltarín
+4|33|0.5|Replanteo y trazado de estructuras
+4|34|0.67|Excavación de suelo semiduro 0-2 m
+4|35|0.5|Excavación de suelo semiduro 0-1.7 m
+4|36|0.06|Nivelación y compactado manual
+4|37|0.08|Empedrado de piso e=15 cm
+4|38|0.84|Piso de H°S° carpeta 5 cm
+4|39|0.2|Muro de H°C° dosif. 1:2:3
+4|40|1.6|Media caña de H°S°
+4|41|0.08|Revoque con cemento sobre H°
+4|42|0.51|Tapa losa de H°A°
+4|43|0.51|Retiro de escombros con transporte
+5|45|0.14|Replanteo y trazado de estructuras
+5|46|1.5|Excavación suelo semiduro 0-2 m
+5|47|0.25|Compuerta metálica
+5|48|0.08|Nivelación y compactado manual
+5|49|0.65|Empedrado de piso e=15 cm
+5|50|0.93|Piso de H°S°
+5|51|1.87|Muro de H°C°
+5|52|3.56|Revoque con cemento
+5|53|2.05|Rejilla metálica
+6|55|0.19|Replanteo y trazado de estructuras
+6|56|2.1|Excavacion de suelo semiduro 0 - 2 m
+6|57|0.25|Prov. y col. Compuerta metálica de 30 x 35 x 3/8
+6|58|0.05|Nivelación y compactado manual c/compact.
+6|59|0.65|Empedrado de piso e=15cm
+6|60|0.93|Piso de H°S° - carpeta de 5 cm
+6|61|1.89|Muro de H°C° dosif. 1:2:3 50%
+6|62|2.05|Revoque con cemento sobre H°
+7|64|0.29|Replanteo y trazado de estructuras
+7|65|2.1|Excavación de suelo semiduro 0 - 2 m
+7|66|0.24|Nivelación y compactado manual c/compact.
+7|67|0.48|Empedrado de piso e=15cm
+7|68|0.24|Piso de H°S° - carpeta de 5 cm
+7|69|1.25|Muro de H°C° dosif. 1:2:3 50%
+7|70|1.23|Revoque con cemento sobre H°
+8|72|0.33|Replanteo y trazado de estructuras
+8|73|1.4|Excavacion de suelo semiduro 0 - 2 m
+8|74|0.66|Empedrado de piso e=15cm
+8|75|0.45|Piso de H°S° - carpeta de 5 cm
+8|76|1.27|Muro de H°C° dosif. 1:2:3 50%
+8|77|1.34|Revoque con cemento sobre H°
+9|79|0.11|Replanteo y trazado de estructuras
+9|80|2.56|Excavacion de suelo semiduro 0 - 2 m
+9|81|0.21|Empedrado de piso e=15cm
+9|82|0.05|Hormigón pobre p/capa de fondo
+9|83|0.64|Losa de fondo de H°A° dos: 1:2:3 H21
+9|84|1.54|Muro de H°C° dosif. 1:2:3 50%
+9|85|1.34|Revoque con cemento sobre H°
+9|86|0.37|Retiro de escombros c/transporte
+9|87|0.51|Prov. Y colocado de Bomba 1 HP
+9|88|0.31|Provisión y tendido tubería HDPE 3 plg SDR 21
+9|89|1.14|Accesorios linea estacion de bombeo
+10|91|0.55|Replanteo y trazado de estructuras
+10|92|2.7|Excavación de suelo semiduro 0 - 2 m
+10|93|1.24|Cimiento de H°C° - dosif. 1:2:3 - 60% PD
+10|94|0.11|Sobrecimiento de H°C° dosif. 1:2:3 60% PD
+10|95|1.24|Viga cadena de H°A°
+10|96|7.12|Muro de ladrillo 6 huecos visto 18H e=12 cm
+10|97|1.25|Cubierta de calamina ondulada Nº 28
+10|98|2.65|Empedrado de piso - e = 15 cm
+10|99|3.74|Piso de HS° - carpeta de 5 cm
+10|100|2.79|Revoque cielo falso con viga vista inclinada
+10|101|2.78|Revoque interior de yeso
+10|102|1.25|Revoque alero
+10|103|3.37|Pintura con látex color cerámico
+10|104|0.13|Prov. y col. puerta tablero 90 x 190 cm + quincalle
+10|105|0.22|Prov. y col. ventana madera 2,5 x 1.8 m + reja met.
+10|106|0.17|Retiro y limpieza de escombros con volqueta
+21|108|0.06|REPLANTEO DE ESTRUCTURAS Y EDIFICACIONES
+21|109|0.27|Excavación de 0-2 m suelo semiduro
+21|110|1.07|Muro de H°C° dosif. 1:2:3 50%
+21|111|1.08|REVOQ.MORTERO C/ADITIVO IMPERM.1:3 E=2.5
+21|112|0.21|HO.AO.LOSA TAPA H20 C/IMPERM. XIPEX ADMIX C-1000
+11|114|0.98|Replanteo de estructuras y edificaciones
+11|115|2.15|Excavación para estructuras con y sin agotamiento
+11|116|1.25|Hormigón de nivelación (H-15)
+11|117|2.78|Hormigón simple (H-25)
+11|118|2.68|Acero estructural
+11|119|5.78|Provisión y tendido tubería HDPE 2 plg SDR 21
+11|120|1.85|PROV Y COL BOMBA DE 1.5 HP DN 75MM
+11|121|1.87|Prueba hidráulica
+11|122|1.58|Separadores gsl campanas para gas metano
+11|123|3.79|Prov y col válvula tipo compuerta DN 100-110 PN16
+11|124|5.98|Accesorios para tanque UASB
+11|125|2.78|Prov. y tendido tub. captacion de biogas FG D=2"
+12|127|1.77|Replanteo y trazado de lineal
+12|128|12.51|Excavación no clasificada
+12|129|1.55|Estudio de suelo
+12|130|4.61|Conformación de terraplén
+12|131|10.59|Encollerado de piedra a mano e=15 cm
+12|132|0.24|Tubería PVC CLASE 9 D=8" (PROV. Y COLOC.)
+13|134|0.29|Replanteo y trazado de lineal
+13|135|0.56|Excavacion 0 - 2 suelo semiduro
+13|136|1.24|Muro de H°C° - dosif. 1:2:3 - 60% PD
+13|137|0.16|H°A° losa (estructural)
+13|138|0.46|Revoque interior con cemento e imp. Sobre H°
+14|140|1.24|Replanteo y trazado de lineal
+14|141|12.58|Excavacion no clasificada
+14|142|3|Estudio de suelo
+14|143|14.73|Conformacion de terraplen
+14|144|22.38|Encollerado de piedra a mano e=15 cm
+14|145|0.24|Tubería PVC CLASE 9 D=4" (PROV. Y COLOC.)
+15|147|0.58|Replanteo y trazado de lineal
+15|148|0.67|Excavacion 0 - 2 suelo semiduro
+15|149|2.4|Muro de H°C° - dosif. 1:2:3 - 60% PD
+15|150|0.32|H°A° losa (estructural)
+15|151|0.56|Revoque interior con cemento e imp. Sobre H°
+16|153|0.37|Replanteo de estructuras y edificaciones
+16|154|2.78|Excavación para estructuras con y sin agotamiento
+16|155|2.49|Piso de H°C° dosif: 1:2:3 50%
+16|156|1.75|Hormigón de nivelación (H-15)
+16|157|1.23|Hormigón simple (H-25)
+16|158|0.21|Tubería PVC CLASE 9 D=4" (prov. y coloc.)
+17|160|0.43|Replanteo y control de lineas de tuberia
+17|161|0.58|Excavación para estructuras con y sin agotamiento
+17|162|1.43|Provision y tendido de tuberia PVC ASTM 3034 SDR 41 DN 150mm
+17|163|1.78|Camara de insp. Hormigón simple (H-25)
+18|165|0.82|Replanteo y trazado lineal
+18|166|7.83|Excavación de 0-2 m suelo semiduro
+18|167|11.75|Cimiento de H°C° - dosif. 1:2:3 - 60% PD
+18|168|7.83|Sobrecimiento de H°C° dosif. 1:2:3 50% PD
+18|169|16.32|Cerco c/malla olímpica y postes C/2.5 m
+18|170|2|Prov. y col. puerta c/malla olímpica 3.5 x 2.0 m
+19|172|1|REPLANTEO DE ESTRUCTURAS Y EDIFICACIONES
+19|173|1.45|HO.AO.ZAPATAS (ESTRUT.CORRIENTES)H20 NBH
+19|174|3.23|EXCAVACION COMUN DE 0-2 M SUELO SEMIDURO
+19|175|0.99|CIMIENTOS DE HO.C.FC=180KG/CM2(1:2:4)60%
+19|176|0.37|HO.AO.SOBRECIMIENTOS H15 NBH - 87
+19|177|0.17|RELLENO Y COMPACTADO (TIERRA SELECC.)
+19|178|0.95|CUBIERTA DE CALAMINA N° 28 CON ESTRUCTURA
+19|179|0.75|HORMIGON ARMADO COLUMNAS H 20 CBH-8
+19|180|0.37|HO.AO.VIGAS(ESTRUT.CORRIENTES)H 20 CBH-8
+19|181|4.29|MURO LADRI.6H E=0.18 LADRLTH6A-1CAR.VIS
+19|182|1.66|PISO CEMEN. C/CONTRAPISO PIEDRA
+19|183|0.25|PROV. COLOC.PUERTA PLACA MARA-MARCO 2X4"
+19|184|0.2|PROV/COLOCACION DE VENTANA METALICA ANG
+19|185|0.19|PROV. Y COLOCACION DE VIDRIOS DOBLES
+19|186|0.5|ILUMINACION FLUORESCENTE(C/LUMINA 2X40W)
+19|187|0.4|PROV. E INSTALACION DE TOMACORRIENTE
+19|188|0.78|MEDIDOR DE LUZ Y CAJA ELECTRICA
+19|189|1.17|CIELO FALSO CON MADERAMEN
+19|190|1.06|PINTURA LATEX INTERIORES
+19|191|2.13|REVOQUE DE YESO SOBRE LADRILLO
+19|192|1.63|REVOQUE CAL-CEMENTO SOBRE LADRILLO
+19|193|1|PISO DE CERAMICA SIN ESMALTE
+19|194|0.94|REVESTIMIENTO DE AZULEJO SOBRE LADRILLO
+19|195|0.04|PROV.COLOC.CHAPA EXTERIO-LLAVE PLANA 2MM
+19|196|2.26|CUMBRERA DE CALAMINA PLANA
+19|197|0.31|PROVISION/INSTALACION INODORO TANQUE BAJO
+19|198|0.12|PROV. E INSTALAC.LAVAMANOS CON PEDESTAL
+19|199|0.54|INSTALACION AGUA POTABLE
+19|200|1.08|ZOCALO DE CERAMICA ROJA SIN ESMALTE
+19|201|0.02|PROV/COLOCACION DE BISAGRAS DOBLES DE 4"
+19|202|0.02|PICAPORTES DE 3"
+19|203|0.8|ILUMINACION PLANTA DE TRATAMIENTO
+20|205|0.29|REPLANTEO DE ESTRUCTURAS Y EDIFICACIONES
+20|206|0.91|Excavación de 0-2 m suelo semiduro
+20|207|1.56|HO.AO. ESTRUCT. CANAL UV H20 C/IMPERM. XIPEX ADMIX C-1000
+20|208|2.71|PROV. COLOCACION DE EQUIPOS COMPLETOS DE DESINFECCION UV
+20|209|0.62|REVOQ.MORTERO C/ADITIVO IMPERM.1:3 E=2.5
+20|210|1.51|INSTALACION ELECTRICA Y TABLERO DE CONTROL
+20|211|0.21|HO.AO.LOSA TAPA H20 C/IMPERM. XIPEX ADMIX C-1000

@@ -56,6 +56,25 @@ describe('duración y programación', () => {
     expect(g.modulos[1]!.inicio >= g.modulos[0]!.fin).toBe(true);
     expect(g.fin).toBe(g.modulos[1]!.fin);
   });
+  it('admite duraciones fraccionarias: la siguiente empieza donde termina la anterior', () => {
+    const p = proy([partida(1, 1, 0, { duracion: 0.5 }), partida(1, 1, 0, { duracion: 2.25 }), partida(1, 1, 0, { duracion: 0.25 })]);
+    p.cronograma = { ...CRONOGRAMA_DEFECTO, diasLaborables: 7 };
+    const g = programar(p).modulos[0]!.actividades;
+    expect(g.map((x) => x.duracion)).toEqual([0.5, 2.25, 0.25]);
+    expect(g[0]).toMatchObject({ inicio: '2024-03-04', fin: '2024-03-04' });
+    expect(g[1]).toMatchObject({ inicio: '2024-03-04', fin: '2024-03-06' }); // 0,5 → 2,75
+    expect(g[2]).toMatchObject({ inicio: '2024-03-06', fin: '2024-03-06' }); // 2,75 → 3,0
+    expect(programar(p).diasCalendario).toBe(3);
+  });
+  it('un módulo puede empezar al terminar otro módulo o una actividad concreta de él', () => {
+    const p = proy([partida(1, 1, 0, { duracion: 4 }), partida(1, 1, 0, { duracion: 10 }), partida(2, 1, 0, { duracion: 3 }), partida(3, 1, 0, { duracion: 3 })], 3);
+    p.cronograma = { ...CRONOGRAMA_DEFECTO, diasLaborables: 7 };
+    p.modulos[1]!.despuesDe = 1; p.modulos[1]!.despuesDeActividad = 1; // tras la actividad de 4 días
+    p.modulos[2]!.despuesDe = 1; // tras todo el módulo 1 (14 días)
+    const g = programar(p).modulos;
+    expect(g[1]!.inicio).toBe('2024-03-08'); // día 4
+    expect(g[2]!.inicio).toBe('2024-03-18'); // día 14
+  });
   it('ignora ciclos de predecesoras sin colgarse', () => {
     const p = proy([partida(1, 8, 0.8, { predecesor: 2 }), partida(1, 8, 0.8, { predecesor: 1 })]);
     expect(() => programar(p)).not.toThrow();

@@ -37,7 +37,7 @@ export function CronogramaPantalla() {
                 const b = barra(g, a.inicio, a.fin);
                 return (
                   <tr key={pos} data-testid="fila-actividad">
-                    <td className="c">{a.modulo}.{a.posicion}</td><td>{a.partida.descripcion}</td><td className="n"><Numero id="duracion" ancho={52} decimales={0} valor={a.duracion} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.duracion = Math.max(1, Math.round(n)); })} /></td>
+                    <td className="c">{a.modulo}.{a.posicion}</td><td>{a.partida.descripcion}</td><td className="n"><Numero id="duracion" ancho={52} decimales={Number.isInteger(a.duracion) ? 0 : 2} valor={a.duracion} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.duracion = Math.max(0.01, Math.round(n * 100) / 100); })} /></td>
                     <td className="n"><Numero id="cuadrilla" ancho={52} decimales={0} valor={a.partida.cuadrilla ?? 1} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.cuadrilla = Math.max(1, Math.round(n)); })} /></td>
                     <td className="n"><Numero id="predecesor" ancho={46} decimales={0} valor={a.predecesor} alCambiar={(n) => cambiar((p) => { p.partidas[pos]!.predecesor = Math.round(n); })} /></td>
                     <td className="c">{fechaBo(a.inicio)}</td><td className="c">{fechaBo(a.fin)}</td>

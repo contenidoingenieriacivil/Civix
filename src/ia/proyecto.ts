@@ -1,6 +1,7 @@
 import type { BaseDatos, LineaComputo, Partida, Proyecto } from '../datos/modelo';
 import { agregarItemDeBase, cantidadDeComputo, nuevoProyecto, sinAcentos } from '../nucleo/operaciones';
 import { PLANTILLAS_PREDEFINIDAS, PLANTILLA_SABS } from '../nucleo/plantillas';
+import { CRONOGRAMA_DEFECTO } from '../nucleo/cronograma';
 import { aNumero } from './intercambio';
 
 /**
@@ -19,9 +20,17 @@ export interface PaqueteProyecto {
     /** Cambios de porcentaje sobre la plantilla, p. ej. [{ "parametro": "cargas sociales", "porcentaje": 55 }]. */
     parametros?: { parametro: string; porcentaje: number | string }[];
     memo?: string;
+    /** Días laborables por semana (7 = calendario corrido) y horas por día del cronograma. */
+    diasLaborables?: number | string; horasDia?: number | string;
   };
   modulos: {
     nombre: string;
+    /** Número del módulo (1, 2, 3…) tras cuyo fin empieza este; si no se indica, empieza al terminar el módulo anterior. */
+    despuesDe?: number | string;
+    /** Con "despuesDe": posición de la actividad de ese módulo tras cuyo fin empieza este (en vez de su fin). */
+    despuesDeActividad?: number | string;
+    /** Fecha de inicio fija (aaaa-mm-dd). */
+    inicio?: string;
     partidas: {
       descripcion?: string; unidad?: string;
       /** Cantidad total; si hay "computo", se calcula de él. */
@@ -60,6 +69,8 @@ export function importarProyecto(entrada: unknown, bases: BaseDatos[]): { proyec
   p.moneda = /^(usd|\$us|\$)/i.test(String(d.moneda ?? 'Bs')) ? 1 : 2;
   const tc = n(d.tipoCambio); if (tc) p.cambioDolar = tc;
   p.modulos = [];
+  const dl = n(d.diasLaborables), hd = n(d.horasDia);
+  if (dl || hd) p.cronograma = { ...CRONOGRAMA_DEFECTO, ...(dl && dl >= 1 && dl <= 7 ? { diasLaborables: Math.round(dl) } : {}), ...(hd && hd > 0 && hd <= 24 ? { horasDia: hd } : {}) };
   for (const o of d.parametros ?? []) {
     const q = sinAcentos(String(o.parametro));
     const par = p.plantilla.parametros.find((x) => x.letra.toLowerCase() === q) ?? p.plantilla.parametros.find((x) => x.descripcion && sinAcentos(x.descripcion).includes(q));
@@ -79,7 +90,8 @@ export function importarProyecto(entrada: unknown, bases: BaseDatos[]): { proyec
   };
 
   paq.modulos.forEach((m, mk) => {
-    p.modulos.push({ nombre: String(m.nombre ?? `MÓDULO ${mk + 1}`).toUpperCase().slice(0, 50), inicio: null, fin: null });
+    const antes = n(m.despuesDe);
+    p.modulos.push({ nombre: String(m.nombre ?? `MÓDULO ${mk + 1}`).toUpperCase().slice(0, 50), inicio: /^\d{4}-\d{2}-\d{2}$/.test(m.inicio ?? '') ? m.inicio! : null, fin: null, ...(antes && antes >= 1 && antes <= (paq.modulos?.length ?? 0) ? { despuesDe: Math.round(antes), ...(n(m.despuesDeActividad) ? { despuesDeActividad: Math.round(n(m.despuesDeActividad) as number) } : {}) } : {}) });
     (m.partidas ?? []).forEach((x, k) => {
       const etq = `módulo ${mk + 1}, partida ${k + 1} "${x?.descripcion ?? x?.item ?? ''}"`;
       let computo: LineaComputo[] | undefined;
@@ -138,6 +150,6 @@ export const INSTRUCCIONES_PROYECTO = `Convierte mis cómputos métricos, especi
 Reglas:
 - "item": código (p. ej. R052) o descripción EXACTA de un ítem de mis bases de datos; así Civix toma su análisis de precios unitarios (B-2). Si el ítem no existe en mis bases, NO lo inventes: dame "precioUnitario" directo si lo conozco, o déjalo fuera y avísame al final.
 - Cantidad: usa "cantidad" (total) o "computo" (líneas con veces, largo, ancho, alto; Civix multiplica lo informado y suma las líneas). Las unidades deben ser coherentes (m → largo; m² → largo×ancho; m³ → largo×ancho×alto).
-- Cronograma: "duracion" son días laborables (obligatorio si la partida no tiene análisis con mano de obra); "predecesor" es la posición de la partida previa en su módulo (0 = empieza con el módulo). Si el documento trae el cronograma (MS Project, Excel), úsalo; si no, omite estos campos y no los inventes.
+- Cronograma: "duracion" son días (admite decimales, p. ej. 3.17; obligatorio si la partida no tiene análisis con mano de obra); "predecesor" es la posición de la partida previa en su módulo (0 = empieza con el módulo). Para el módulo, "despuesDe" es el número del módulo tras cuyo fin empieza (si no se indica, empieza al terminar el anterior) y en "proyecto" puede ir "diasLaborables" (7 = calendario corrido). Si el documento trae el cronograma (MS Project, Excel), úsalo; si no, omite estos campos y no los inventes.
 - Respeta el orden y los módulos (capítulos) de mi presupuesto. No cambies descripciones. Números con punto decimal.
 - "plantilla": "Normas básicas del SABS" (licitaciones públicas, con IVA 14,94 % e IT 3,09 %), "Costo directo" o "Formato completo más IVA".`;
