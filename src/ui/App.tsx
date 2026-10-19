@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Calculator24Regular, ClipboardPaste24Regular, Database24Regular, DocumentAdd24Regular, DocumentPdf24Regular, FolderOpen24Regular, ArrowExport24Regular, ArrowImport24Regular,
   ArrowRedo24Regular, ArrowUndo24Regular, Delete24Regular, Print24Regular, Save24Regular, Sparkle24Regular, Table24Regular, Copy24Regular, DocumentTable24Regular } from '@fluentui/react-icons';
 import { REPORTES } from '../reportes/indice';
-import { abrirBase, abrirProyecto, abrirProyectoPrescom, descargarReporteHtml, guardarReportePdf, exportarBase, exportarExcel, guardarProyecto, imprimirReporte, importarBasesPrescom, nuevo } from './acciones';
-import { alternarAsistente, avisar, cambiar, deshacer, elegirPartida, elegirReporte, irAPestana, obtener, ponerBases, rehacer, useEstado, iniciar } from './almacen';
+import { abrirBase, abrirProyecto, abrirProyectoPrescom, descargarReporteHtml, guardarReportePdf, exportarBase, exportarExcel, guardarProyecto, imprimirReporte, importarBasesPrescom } from './acciones';
+import { alternarAsistente, solicitarImportacion, avisar, cambiar, deshacer, elegirPartida, elegirReporte, irAPestana, obtener, ponerBases, rehacer, useEstado, iniciar } from './almacen';
 import { Asistente } from './pantallas/Asistente';
 import { BaseDatosPantalla } from './pantallas/BaseDatos';
 import { ImportarIA } from './pantallas/ImportarIA';
+import { NuevoProyecto } from './pantallas/NuevoProyecto';
+import { VERSION } from './version';
 import { CronogramaPantalla } from './pantallas/Cronograma';
 import { ConfiguracionPantalla } from './pantallas/Configuracion';
 import { Presupuesto } from './pantallas/Presupuesto';
@@ -23,6 +25,7 @@ const PESTANAS = [
 export default function App() {
   const e = useEstado((s) => s);
   const [pegar, setPegar] = useState(false);
+  const [nuevoAbierto, setNuevoAbierto] = useState(false);
   useEffect(() => { void iniciar(); }, []);
   useEffect(() => {
     const t = (ev: KeyboardEvent) => {
@@ -38,7 +41,7 @@ export default function App() {
   const cmd = (id: string, etiqueta: string, icono: React.ReactNode, accion: () => void, extra: { ayuda?: string; deshabilitado?: boolean } = {}) => ({ id, etiqueta, icono, accion, ...extra });
   const grupos: Record<string, Grupo[]> = {
     archivo: [
-      { titulo: 'Proyecto', comandos: [cmd('nuevo', 'Nuevo', <DocumentAdd24Regular />, nuevo), cmd('abrir', 'Abrir', <FolderOpen24Regular />, () => void abrirProyecto()), cmd('guardar', 'Guardar', <Save24Regular />, guardarProyecto, { ayuda: 'Guardar (Ctrl+S)' })] },
+      { titulo: 'Proyecto', comandos: [cmd('nuevo', 'Nuevo', <DocumentAdd24Regular />, () => setNuevoAbierto(true)), cmd('abrir', 'Abrir', <FolderOpen24Regular />, () => void abrirProyecto()), cmd('guardar', 'Guardar', <Save24Regular />, guardarProyecto, { ayuda: 'Guardar (Ctrl+S)' })] },
       { titulo: 'Desde PRESCOM', comandos: [cmd('abrir-prescom', 'Proyecto PRESCOM', <ArrowImport24Regular />, () => void abrirProyectoPrescom(), { ayuda: 'Abrir un proyecto .DDP de PRESCOM 2013' }),
         cmd('bases-prescom', 'Bases PRESCOM', <Database24Regular />, () => void importarBasesPrescom(), { ayuda: 'Elija la carpeta «datos» de PRESCOM' })] },
       { titulo: 'Exportar', comandos: [cmd('excel', 'Excel', <DocumentTable24Regular />, () => void exportarExcel())] },
@@ -69,7 +72,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="titulo"><span className="logo">Civix</span><span className="proyecto" data-testid="titulo-proyecto">{e.proyecto.nombre}</span></header>
+      <header className="titulo"><span className="logo">Civix</span><span className="version" data-testid="version">v{VERSION}</span><span className="proyecto" data-testid="titulo-proyecto">{e.proyecto.nombre}</span></header>
       <Ribbon pestanas={PESTANAS} activa={e.pestana} alElegir={irAPestana} grupos={grupos[e.pestana] ?? []} />
       <main className="contenido">
         <div className="principal">
@@ -78,7 +81,8 @@ export default function App() {
         {e.asistente && <Asistente alCerrar={alternarAsistente} />}
       </main>
       <footer className="estado"><span data-testid="aviso">{e.aviso || 'Listo'}</span><span>Total: <b>{e.proyecto.moneda === 1 ? '$US' : 'Bs'} {num(total)}</b></span></footer>
-      {pegar && <ImportarIA alCerrar={() => setPegar(false)} />}
+      {(pegar || e.importarTexto !== null) && <ImportarIA textoInicial={e.importarTexto ?? ''} alCerrar={() => { setPegar(false); solicitarImportacion(null); }} />}
+      {nuevoAbierto && <NuevoProyecto alCerrar={() => setNuevoAbierto(false)} />}
     </div>
   );
 }

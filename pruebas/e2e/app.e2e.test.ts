@@ -220,7 +220,11 @@ describe('interfaz de Civix', () => {
     expect(descarga.suggestedFilename()).toBe('Mi obra de prueba.civix');
     const ruta = (await descarga.path())!;
     await cmd('nuevo');
+    await page.getByTestId('nuevo-nombre').fill('Otro proyecto');
+    await page.getByTestId('crear-proyecto').click();
+    expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('Otro proyecto');
     expect(await totalGeneral()).toContain('0,00');
+    await pestana('archivo');
     const [selector] = await Promise.all([page.waitForEvent('filechooser'), cmd('abrir')]);
     await selector.setFiles(ruta);
     await page.getByTestId('fila-partida').first().waitFor();
@@ -237,6 +241,76 @@ async function pegarYAnalizar(json: string) {
   await page.getByTestId('importar-json').click();
   await page.getByTestId('resultado-importacion').waitFor();
 }
+
+const ENTREGA = process.env.CIVIX_ENTREGA ?? '/home/user/civix-entrega';
+const hayEntrega = existsSync(join(ENTREGA, '1-proyecto-tolomosa-grande.json'));
+
+describe('uso real: los archivos entregados y los botones equivocados', () => {
+  it('muestra la versión y un proyecto vacío invita a importar', async () => {
+    expect(await page.getByTestId('version').innerText()).toMatch(/^v\d+\.\d+\.\d+/);
+    await page.getByTestId('bienvenida').waitFor();
+  });
+
+  it('«Nuevo» pregunta los datos y crea el proyecto', async () => {
+    await pestana('archivo');
+    await cmd('nuevo');
+    await page.getByTestId('nuevo-nombre').fill('Colector Villa Nueva');
+    await page.getByTestId('nuevo-lugar').fill('Tarija');
+    await page.getByTestId('crear-proyecto').click();
+    expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('Colector Villa Nueva');
+    await page.getByTestId('bienvenida').waitFor();
+  });
+
+  it('un paquete vacío no se da por bueno', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    await pegarYAnalizar(JSON.stringify({ civix: 1, insumos: [] }));
+    expect(await page.getByTestId('resultado-importacion').innerText()).toMatch(/vacío/);
+  });
+
+  it('un JSON de Civix abierto con «Abrir .civbd» se encamina solo a «Importar de IA»', async () => {
+    await pestana('base');
+    const [selector] = await Promise.all([page.waitForEvent('filechooser'), cmd('abrir-base')]);
+    await selector.setFiles({ name: 'catalogo.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(PAQUETE)) });
+    await page.getByTestId('resultado-importacion').waitFor();
+    expect(await page.getByTestId('resultado-importacion').innerText()).toContain('4 insumos nuevos');
+    await page.getByTestId('cerrar-pegar').click();
+    await page.getByTestId('fila-item').first().waitFor();
+  });
+
+  it('«Elegir archivo .json…» carga un archivo completo', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    const [selector] = await Promise.all([page.waitForEvent('filechooser'), page.getByTestId('elegir-archivo-ia').click()]);
+    await selector.setFiles({ name: 'datos.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(PAQUETE)) });
+    await page.getByTestId('resultado-importacion').waitFor();
+    expect(await page.getByTestId('resultado-importacion').innerText()).toContain('1 ítems nuevos');
+  });
+
+  (hayEntrega ? it : it.skip)('el proyecto de la tesis entregado se carga desde el archivo y da el total esperado', async () => {
+    await page.getByTestId('bienvenida-importar').click();
+    const [selector] = await Promise.all([page.waitForEvent('filechooser'), page.getByTestId('elegir-archivo-ia').click()]);
+    await selector.setFiles(join(ENTREGA, '1-proyecto-tolomosa-grande.json'));
+    await page.getByTestId('abrir-proyecto-ia').waitFor();
+    expect(await page.getByTestId('resultado-importacion').innerText()).toContain('189 partidas en 21 módulos');
+    await page.getByTestId('abrir-proyecto-ia').click();
+    expect(await page.getByTestId('titulo-proyecto').innerText()).toContain('Tolomosa Grande');
+    expect(await totalGeneral()).toContain('4.558.411,45');
+  });
+
+  (hayEntrega ? it : it.skip)('el catálogo entregado se importa y sus análisis se calculan', async () => {
+    await pestana('base');
+    await cmd('pegar-ia');
+    const [selector] = await Promise.all([page.waitForEvent('filechooser'), page.getByTestId('elegir-archivo-ia').click()]);
+    await selector.setFiles(join(ENTREGA, '2-catalogo-costos.json'));
+    await page.getByTestId('resultado-importacion').waitFor();
+    expect(await page.getByTestId('resultado-importacion').innerText()).toMatch(/\d+ insumos nuevos.*1\d\d ítems nuevos/);
+    await page.getByTestId('cerrar-pegar').click();
+    await page.getByTestId('buscar').fill('Replanteo y Trazado de Superficie');
+    await page.getByTestId('fila-item').first().click();
+    expect(await page.getByTestId('pu-base').innerText()).toMatch(/\d/);
+  });
+});
 
 describe('importar de IA: proyecto y actualización de precios', () => {
   it('un proyecto en JSON se revisa antes de abrirse y calcula sus totales', async () => {

@@ -7,13 +7,27 @@ import { nuevoProyecto } from '../nucleo/operaciones';
 import { PLANTILLA_SABS } from '../nucleo/plantillas';
 import { presupuestoAExcel } from '../reportes/excel';
 import { htmlReporte } from '../reportes/indice';
-import { avisar, guardarBase, obtener, ponerBases, reemplazarProyecto } from './almacen';
+import { avisar, guardarBase, irAPestana, obtener, ponerBases, reemplazarProyecto, solicitarImportacion } from './almacen';
 import { descargar, elegirArchivos } from './persistencia';
 
 const bytes = async (f: File) => new Uint8Array(await f.arrayBuffer());
 const seguro = (n: string) => n.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'civix';
 
-export const nuevo = () => reemplazarProyecto(nuevoProyecto('Proyecto nuevo', PLANTILLA_SABS), 'Proyecto nuevo');
+export function crearProyecto(d: { nombre: string; lugar?: string; cliente?: string; moneda?: number; plantilla?: Proyecto['plantilla'] }) {
+  const p = nuevoProyecto(d.nombre.trim() || 'Proyecto nuevo', structuredClone(d.plantilla ?? PLANTILLA_SABS));
+  p.lugar = d.lugar ?? ''; p.cliente = d.cliente ?? ''; p.moneda = d.moneda ?? 2;
+  reemplazarProyecto(p, `Proyecto «${p.nombre}» creado`);
+  irAPestana('inicio');
+}
+
+/** Si el archivo no es del tipo que pedía el botón pero es un JSON de Civix (datos, proyecto o precios), lo encamina a «Importar de IA». */
+function aImportacion(texto: string, nombre: string, esperado: string): boolean {
+  try {
+    const d = JSON.parse(texto.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) as { civix?: number; tipo?: string; insumos?: unknown; items?: unknown };
+    if (d?.civix === 1 && (d.tipo || d.insumos || d.items)) { solicitarImportacion(texto); avisar(`${nombre} no es ${esperado}; se abrió «Importar de IA» para revisarlo`); return true; }
+  } catch { /* no es JSON */ }
+  return false;
+}
 
 export function guardarProyecto() {
   const p = obtener().proyecto;
@@ -28,7 +42,9 @@ export async function abrirProyecto() {
     const d = JSON.parse(await f.text()) as { civix?: number; proyecto?: Proyecto };
     if (d.civix !== 1 || !d.proyecto || !Array.isArray(d.proyecto.partidas)) throw new Error('no es un proyecto de Civix');
     reemplazarProyecto(d.proyecto, `Abierto ${f.name}`);
-  } catch (e) { avisar(`No se pudo abrir ${f.name}: ${e instanceof Error ? e.message : e}`); }
+  } catch (e) {
+    if (!aImportacion(await f.text(), f.name, 'un proyecto guardado de Civix')) avisar(`No se pudo abrir ${f.name}: ${e instanceof Error ? e.message : e}`);
+  }
 }
 
 export async function abrirProyectoPrescom() {
@@ -71,7 +87,9 @@ export async function abrirBase() {
     const d = JSON.parse(await f.text()) as { civix?: number; base?: BaseDatos };
     if (d.civix !== 1 || !d.base || !Array.isArray(d.base.items)) throw new Error('no es una base de datos de Civix');
     guardarBase(d.base); avisar(`Base "${d.base.nombre}" abierta`);
-  } catch (e) { avisar(`No se pudo abrir ${f.name}: ${e instanceof Error ? e.message : e}`); }
+  } catch (e) {
+    if (!aImportacion(await f.text(), f.name, 'una base de datos guardada de Civix')) avisar(`No se pudo abrir ${f.name}: ${e instanceof Error ? e.message : e}`);
+  }
 }
 
 /** Importa texto JSON (de una IA) a la base indicada; si no hay base, crea "Mi base de datos". */

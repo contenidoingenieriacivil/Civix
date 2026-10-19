@@ -7,7 +7,7 @@ import { agregarModulo } from '../../nucleo/operaciones';
 import { calcularProyecto } from '../../nucleo/presupuesto';
 import type { Linea } from '../../nucleo/tipos';
 import { num } from '../../reportes/formato';
-import { cambiar, elegirPartida, irAModulo, useEstado } from '../almacen';
+import { cambiar, elegirPartida, irAModulo, irAPestana, solicitarImportacion, useEstado } from '../almacen';
 import { Numero } from '../campos';
 
 export function Presupuesto() {
@@ -31,6 +31,16 @@ export function Presupuesto() {
         <Button size="small" appearance="subtle" onClick={() => setRenombrando(true)} data-testid="renombrar-modulo">Renombrar</Button>
       </div>
 
+      {calc.modulos.every((m) => m.partidas.length === 0) && (
+        <div className="bienvenida" data-testid="bienvenida">
+          <h3>Este proyecto aún no tiene partidas</h3>
+          <p>Tres formas de empezar: añadir ítems de una base de datos, <b>importar de una IA</b> un archivo JSON (proyecto, datos o precios), o abrir un proyecto de PRESCOM (menú Archivo).</p>
+          <div className="acciones">
+            <Button appearance="primary" onClick={() => solicitarImportacion('')} data-testid="bienvenida-importar">Importar de IA (elegir archivo .json)</Button>
+            <Button onClick={() => irAPestana('base')}>Ir a las bases de datos</Button>
+          </div>
+        </div>
+      )}
       <div className="tabla-contenedor">
         <table className="grilla" data-testid="grilla-presupuesto">
           <thead><tr><th style={{ width: 54 }}>N°</th><th>Descripción</th><th style={{ width: 70 }}>Unidad</th><th style={{ width: 110 }}>Cantidad</th><th style={{ width: 110 }}>P. unitario</th><th style={{ width: 130 }}>Parcial ({moneda})</th></tr></thead>

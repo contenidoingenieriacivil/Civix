@@ -17,9 +17,11 @@ export interface Estado {
   reporte: string;
   asistente: boolean;
   pestana: string;
+  /** Texto JSON que debe analizarse en «Importar de IA» (p. ej. un archivo abierto por el botón equivocado). */
+  importarTexto: string | null;
 }
 
-let estado: Estado = { proyecto: nuevoProyecto('Proyecto nuevo', PLANTILLA_SABS), bases: [], modulo: 1, deshacer: [], rehacer: [], aviso: '', seleccion: -1, reporte: 'B-1', asistente: false, pestana: 'inicio' };
+let estado: Estado = { proyecto: nuevoProyecto('Proyecto nuevo', PLANTILLA_SABS), bases: [], modulo: 1, deshacer: [], rehacer: [], aviso: '', seleccion: -1, reporte: 'B-1', asistente: false, pestana: 'inicio', importarTexto: null };
 const oyentes = new Set<() => void>();
 const emitir = () => oyentes.forEach((f) => f());
 const poner = (e: Partial<Estado>) => { estado = { ...estado, ...e }; emitir(); };
@@ -52,6 +54,7 @@ export function rehacer() {
 export const irAModulo = (modulo: number) => poner({ modulo });
 export const elegirPartida = (seleccion: number) => poner({ seleccion });
 export const elegirReporte = (reporte: string) => poner({ reporte });
+export const solicitarImportacion = (importarTexto: string | null) => poner({ importarTexto });
 export const irAPestana = (pestana: string) => poner({ pestana });
 export const alternarAsistente = () => poner({ asistente: !estado.asistente });
 export const avisar = (aviso: string) => poner({ aviso });

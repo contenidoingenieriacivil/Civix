@@ -1,11 +1,12 @@
 import { Button, Checkbox, Textarea } from '@fluentui/react-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { importarPaquete, INSTRUCCIONES_IA } from '../../ia/intercambio';
 import { aplicarActualizacion, exportarInsumosParaIA, INSTRUCCIONES_PRECIOS, planificarActualizacion, type InformeActualizacion } from '../../ia/precios';
 import { importarProyecto, INSTRUCCIONES_PROYECTO } from '../../ia/proyecto';
 import type { Proyecto } from '../../datos/modelo';
 import { num } from '../../reportes/formato';
 import { avisar, cambiar, guardarBase, obtener, reemplazarProyecto } from '../almacen';
+import { elegirArchivos } from '../persistencia';
 
 type Analisis =
   | { tipo: 'error'; mensajes: string[] }
@@ -31,6 +32,8 @@ export function analizarJson(texto: string): Analisis {
     return { tipo: 'precios', informe: inf, mensajes: [] };
   }
   if (d && (d.insumos || d.items)) {
+    if (!Array.isArray(d.insumos) && !Array.isArray(d.items)) return { tipo: 'error', mensajes: ['«insumos» e «items» deben ser listas.'] };
+    if (!((d.insumos as unknown[] | undefined)?.length) && !((d.items as unknown[] | undefined)?.length)) return { tipo: 'error', mensajes: ['El paquete está vacío: no trae insumos ni ítems.'] };
     const base = bases[0] ?? { nombre: 'Mi base de datos', moneda: 2, grupos: [], insumos: [], items: [] };
     const { base: nueva, informe } = importarPaquete(d, base);
     if (informe.errores.length) return { tipo: 'error', mensajes: informe.errores };
@@ -40,16 +43,24 @@ export function analizarJson(texto: string): Analisis {
   return { tipo: 'error', mensajes: ['No reconozco el contenido: debe ser un paquete de datos (insumos/ítems), un proyecto («tipo»: «proyecto») o una lista de precios («tipo»: «precios»).'] };
 }
 
-export function ImportarIA({ alCerrar }: { alCerrar: () => void }) {
-  const [texto, setTexto] = useState('');
+export function ImportarIA({ alCerrar, textoInicial = '' }: { alCerrar: () => void; textoInicial?: string }) {
+  const [texto, setTexto] = useState(textoInicial);
   const [res, setRes] = useState<Analisis | null>(null);
   const [marcas, setMarcas] = useState<Record<number, boolean>>({});
   const copiar = (t: string, msg: string) => { void navigator.clipboard?.writeText(t); avisar(msg); };
 
-  const analizar = () => {
-    const a = analizarJson(texto);
+  const analizar = (t: string = texto) => {
+    const a = analizarJson(t);
     setRes(a);
     if (a.tipo === 'precios') setMarcas(Object.fromEntries(a.informe.cambios.map((c, k) => [k, c.aceptar])));
+  };
+  useEffect(() => { if (textoInicial) analizar(textoInicial); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const elegirArchivo = async () => {
+    const [f] = await elegirArchivos('.json,.civix,.civbd,.txt');
+    if (!f) return;
+    const t = await f.text();
+    setTexto(t);
+    analizar(t);
   };
   const aplicarPrecios = () => {
     if (res?.tipo !== 'precios') return;
@@ -65,6 +76,7 @@ export function ImportarIA({ alCerrar }: { alCerrar: () => void }) {
       <h3>Importar lo que preparó una IA</h3>
       <p className="nota-ui">Pegue el JSON. Civix detecta si son <b>datos</b> (insumos/ítems), un <b>proyecto</b> o una lista de <b>precios</b>, lo valida completo y le muestra qué cambiaría antes de guardar.</p>
       <div className="acciones">
+        <Button size="small" appearance="primary" onClick={() => void elegirArchivo()} data-testid="elegir-archivo-ia">Elegir archivo .json…</Button>
         <Button size="small" onClick={() => copiar(INSTRUCCIONES_IA, 'Instrucciones de datos copiadas')} data-testid="copiar-instr-datos">Instrucciones: datos</Button>
         <Button size="small" onClick={() => copiar(INSTRUCCIONES_PROYECTO, 'Instrucciones de proyecto copiadas')} data-testid="copiar-instr-proyecto">Instrucciones: proyecto</Button>
         <Button size="small" onClick={() => copiar(INSTRUCCIONES_PRECIOS, 'Instrucciones de precios copiadas')} data-testid="copiar-instr-precios">Instrucciones: actualizar precios</Button>
@@ -90,7 +102,7 @@ export function ImportarIA({ alCerrar }: { alCerrar: () => void }) {
           </div>
         );
       })()}
-      <div className="acciones"><Button appearance={res ? 'secondary' : 'primary'} onClick={analizar} data-testid="importar-json">Importar</Button><Button onClick={alCerrar} data-testid="cerrar-pegar">Cerrar</Button></div>
+      <div className="acciones"><Button appearance={res ? 'secondary' : 'primary'} onClick={() => analizar()} data-testid="importar-json">Importar</Button><Button onClick={alCerrar} data-testid="cerrar-pegar">Cerrar</Button></div>
     </div></div>
   );
 }

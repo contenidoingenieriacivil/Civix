@@ -53,3 +53,6 @@ ul.ok { color: #14532d; padding-left: 18px; margin: 4px 0; } ul.errores { color:
 .gantt-meses { position: relative; height: 18px; } .gantt-meses span { position: absolute; top: 0; text-align: center; font-size: 10px; border-left: 1px solid #aab; overflow: hidden; }
 .gantt-celda { position: relative; padding: 0 !important; } .gantt-linea { position: absolute; top: 0; bottom: 0; border-left: 1px solid #e5e7eb; }
 .gantt-barra { position: absolute; top: 5px; bottom: 5px; background: #3b6ea8; border-radius: 2px; min-width: 2px; } .gantt-barra.critica { background: #c0392b; }
+.version { opacity: .7; font-size: 11px; margin-left: -8px; align-self: flex-end; padding-bottom: 8px; }
+.bienvenida { border: 1px dashed var(--borde); border-radius: 8px; padding: 18px; margin: 8px 0; background: #f8fafc; }
+.bienvenida h3 { margin: 0 0 6px; } .bienvenida .acciones { margin-top: 12px; }
