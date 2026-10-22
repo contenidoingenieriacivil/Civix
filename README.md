@@ -11,6 +11,7 @@ Análisis de precios unitarios y presupuestos de obra para Bolivia. App de escri
 | Proyectos | Módulos (añadir, renombrar, mover, eliminar), planilla con descripción, unidad, cantidad y precio directo editables en la misma tabla; partidas nuevas, duplicar, subir/bajar, pasar a otro módulo, eliminar; **análisis de precio unitario** editable (añadir/quitar insumos, crear insumos, rendimientos y precios, pasar a precio directo o armar el análisis); **cómputo métrico** por líneas (veces × largo × ancho × alto o cantidad directa); **especificación técnica**; guardar un análisis en una base para reutilizarlo; búsqueda de partidas en todo el proyecto; deshacer/rehacer, guardado automático y archivos `.civix`; abre proyectos `.DDP` de PRESCOM |
 | Archivos y guardado | Proyecto en un archivo **.civix** (Guardar, Guardar como, Abrir, recientes, doble clic en el Explorador abre Civix); copia de respaldo `.civix.bak` al sobrescribir; aviso de cambios sin guardar (● en el título) y pregunta al cerrar; **recuperación automática** del último trabajo aunque no se guarde; bases en **.civbd** |
 | Insumos del proyecto | Pestaña propia: precios del proyecto editables en un solo lugar (recalcula todas las partidas), cantidad total, monto e incidencia; ajuste por %; reemplazar un insumo por otro en todo el proyecto; tomar precios de una base; crear insumos y quitar los que no se usan |
+| Caja de herramientas | Panel lateral sin conexión: áreas y volúmenes (losas, zapatas, pozos, zanjas con talud), dosificación de hormigón y mortero, ladrillos por m², peso del fierro, madera en pie², pendiente entre cámaras y caudal de tubería llena (Manning), conversión de unidades, monto en literal e impuestos; el resultado se usa como cantidad de la partida o se añade a su cómputo |
 | Herramientas de PRESCOM | Copiar, cortar y pegar partidas (Ctrl+C/X/V), también **desde y hacia Excel**; cambiar el ítem de una partida conservando la cantidad; **igualar precio unitario** (cálculo inverso, con opción solo mano de obra y equipo); duplicar y unir módulos; calculadoras de **peso del fierro** y **madera (pie²)**; exportar el cronograma a **MS Project** |
 | Cronograma | Diagrama de Gantt por módulo con cuadrilla y predecesora editables, plazo = cantidad × rendimiento de mano de obra ÷ (horas/día × cuadrilla), calendario lunes–sábado configurable y **ruta crítica**; formulario **A-8** (horizontal, con barras y ruta crítica en rojo) |
 | Reportes (Bolivia, SABS) | Además: presupuesto por **incidencia (ABC)**, **insumos por ítem**, **flujo de inversiones y plan de desembolsos** con curva S, **flujo de personal**, requerimiento mensual de materiales y de equipo, **gráficos**; cualquier reporte por **módulo** o por partida; **varios reportes en un solo PDF**; membrete de la empresa y firmas (elaborado, revisado, aprobado). **A-8** cronograma, **B-1** presupuesto con precio en literal y monto total en literal, **B-2** análisis de precios unitarios (una hoja por ítem), **B-3** precios elementales, **B-4** costo horario de equipos, resumen general (módulos, rubros, grupos) y desglose de insumos. Salida a PDF, impresión, HTML y Excel (.xlsx con fórmulas) |
@@ -19,10 +20,9 @@ Análisis de precios unitarios y presupuestos de obra para Bolivia. App de escri
 | Robustez | Todos los campos validan lo escrito (texto en un número, negativos, vacíos, valores enormes): se rechaza y se avisa en la barra inferior sin perder datos; si una pantalla fallara, se puede deshacer el último cambio desde el aviso |
 | IA sin conexión | *Datos, proyecto y precios*: la IA (Gemini, ChatGPT, Claude…) redacta un JSON; Civix lo valida (todo o nada), muestra qué cambiaría y recién entonces lo guarda. **Actualizar precios**: Civix exporta la lista de insumos del proyecto, la IA devuelve los precios nuevos de un PDF con esos nombres y unidades, y se aplican los que usted confirme. *Órdenes*: frases como «sube 5% el cemento» o JSON de órdenes, con **vista previa** y deshacer |
 
-### Cómo trabajar con una IA
-1. En el panel **Asistente**, pulse «Copiar instrucciones de datos» y péguelas en su IA junto con las cotizaciones o planillas.
-2. Copie el JSON que devuelva y use **Base de datos → Pegar datos de IA**. Si hay errores, Civix los explica y no guarda nada.
-3. Para operar sobre el proyecto, escriba en el Asistente o pegue las órdenes que redactó la IA («Copiar instrucciones de órdenes»); pulse **Ver qué haría** y luego **Aplicar**.
+### Cómo cargar datos preparados con una IA
+1. En **Base de datos → Importar datos**, pulse «Instrucciones: datos / proyecto / actualizar precios» y péguelas en su IA (Gemini, ChatGPT, Claude…) junto con sus documentos.
+2. Guarde lo que devuelva como archivo .json (o péguelo) en **Importar datos**. Civix lo valida completo, le muestra qué cambiaría y no guarda nada si hay errores.
 
 ### Atajos de teclado (pestaña Inicio)
 | Tecla | Acción |
@@ -74,6 +74,6 @@ src/nucleo/      cálculo (APU, plantillas, presupuesto, literal, equipos, opera
 src/datos/       modelo e importadores de PRESCOM
 src/reportes/    formularios B-1…B-4, resúmenes y Excel
 src/ia/          formato de intercambio JSON y lenguaje de órdenes
-src/ui/          cinta de opciones, planilla, bases, reportes, configuración, asistente
+src/ui/          cinta de opciones, planilla, insumos, bases, reportes, configuración, caja de herramientas
 pruebas/         unitarias, regresión contra PRESCOM y e2e
 ```

@@ -4,7 +4,7 @@ import { ordenLogico } from '../nucleo/calculo';
 import { cantidadLinea } from '../nucleo/operaciones';
 import { desgloseInsumos, diagnosticar, resumenPorGrupo, resumenPorRubro, type ProyectoCalculado } from '../nucleo/presupuesto';
 import type { Rubro } from '../nucleo/tipos';
-import { documento, esc, fechaBo, num } from './formato';
+import { documento, esc, fechaBo, nombreInsumo, num } from './formato';
 
 const NOTA_B1 = 'NOTA. La empresa proponente declara de forma expresa que el presente Formulario contiene los mismos precios unitarios que los señalados en el Formulario B-2.';
 const NOTA_B2 = 'Nota.- El Proponente declara que el presente Formulario ha sido llenado de acuerdo con las especificaciones técnicas, aplicando las leyes sociales y tributarias vigentes, y es consistente con el Formulario B-3.';
@@ -57,7 +57,7 @@ export function formularioB2(c: ProyectoCalculado): string {
       const filas = ls.map((l) => {
         const i = c.insumos.get(l.insumo);
         if (!i) return '';
-        return `<tr><td>${esc(i.descripcion)}</td><td class="c">${esc(i.unidad)}</td><td class="n">${num(l.rendimiento, 4)}</td><td class="n">${num(i.precio, 3)}</td><td class="n">${num(l.rendimiento * i.precio, d)}</td></tr>`;
+        return `<tr><td>${esc(nombreInsumo(i.descripcion))}</td><td class="c">${esc(i.unidad)}</td><td class="n">${num(l.rendimiento, 4)}</td><td class="n">${num(i.precio, 3)}</td><td class="n">${num(l.rendimiento * i.precio, d)}</td></tr>`;
       }).join('');
       return `<tr class="sub"><td colspan="5">${titulo}</td></tr>${filas}<tr class="sub"><td colspan="4" class="n">Total ${titulo.toLowerCase()}</td><td class="n">${num(total, d)}</td></tr>`;
     };
@@ -91,7 +91,7 @@ export function formularioB3(c: ProyectoCalculado): string {
   const p = c.proyecto;
   const des = desgloseInsumos(c);
   const secciones = RUBROS.map(([r, nombre]) => {
-    const filas = des[r].map((f, k) => `<tr><td class="c">${k + 1}</td><td>${esc(f.insumo.descripcion)}</td><td class="c">${esc(f.insumo.unidad)}</td><td class="n">${num(f.insumo.precio, 3)}</td></tr>`).join('');
+    const filas = des[r].map((f, k) => `<tr><td class="c">${k + 1}</td><td>${esc(nombreInsumo(f.insumo.descripcion))}</td><td class="c">${esc(f.insumo.unidad)}</td><td class="n">${num(f.insumo.precio, 3)}</td></tr>`).join('');
     return des[r].length ? `<h2><b>${nombre}</b></h2><table class="t"><thead><tr><th>N°</th><th>DESCRIPCIÓN</th><th>UNIDAD</th><th>PRECIO UNITARIO</th></tr></thead><tbody>${filas}</tbody></table>` : '';
   }).join('<br>');
   const vacio = RUBROS.every(([r]) => des[r].length === 0);
@@ -107,6 +107,8 @@ export interface CostoEquipo {
   mantenimiento: number;
   combustibles: number;
   otros: number;
+  /** Sin datos de costo horario cargados: el total es el precio por hora del análisis. */
+  sinDetalle?: boolean;
 }
 
 export const totalEquipo = (e: CostoEquipo) => e.basico + e.mantenimiento + e.combustibles + e.otros;
@@ -115,8 +117,11 @@ export const totalEquipo = (e: CostoEquipo) => e.basico + e.mantenimiento + e.co
 export function formularioB4(c: ProyectoCalculado, equipos: CostoEquipo[]): string {
   const p = c.proyecto;
   const d = c.decimales;
-  const filas = equipos.map((e) => `<tr><td>${esc(e.descripcion)}</td><td class="n">${num(e.potencia, 1)}</td><td class="n">${num(e.basico, d)}</td><td class="n">${num(e.mantenimiento, d)}</td><td class="n">${num(e.combustibles, d)}</td><td class="n">${num(e.otros, d)}</td><td class="n"><b>${num(totalEquipo(e), d)}</b></td></tr>`).join('');
-  const avisoB4 = equipos.length ? '' : '<div class="aviso"><b>Sin equipos:</b> ninguna partida del proyecto usa equipo o maquinaria en su análisis de precios unitarios. Si el proyecto tiene precios directos, cargue los análisis para obtener el costo horario de los equipos.</div>';
+  const filas = equipos.map((e) => e.sinDetalle
+    ? `<tr><td>${esc(nombreInsumo(e.descripcion))}</td><td class="c" colspan="5"><i>precio por hora del análisis (sin desglose de costo horario)</i></td><td class="n"><b>${num(totalEquipo(e), d)}</b></td></tr>`
+    : `<tr><td>${esc(nombreInsumo(e.descripcion))}</td><td class="n">${num(e.potencia, 1)}</td><td class="n">${num(e.basico, d)}</td><td class="n">${num(e.mantenimiento, d)}</td><td class="n">${num(e.combustibles, d)}</td><td class="n">${num(e.otros, d)}</td><td class="n"><b>${num(totalEquipo(e), d)}</b></td></tr>`).join('');
+  const sinDesglose = equipos.filter((e) => e.sinDetalle).length;
+  const avisoB4 = equipos.length ? (sinDesglose ? `<p class="nota">${sinDesglose} de ${equipos.length} equipos no tienen cargado el desglose de su costo horario (valor, vida útil, combustible…); se muestra el precio por hora de su análisis. Complételo en Configuración → Costo horario de equipos.</p>` : '') : '<div class="aviso"><b>Sin equipos:</b> ninguna partida del proyecto usa equipo o maquinaria en su análisis de precios unitarios. Si el proyecto tiene precios directos, cargue los análisis para obtener el costo horario de los equipos.</div>';
   return documento('Formulario B-4', `<h1>FORMULARIO B-4</h1><h2>Costo de trabajo de los equipos</h2>${cabecera(p)}${avisoB4}
 <table class="t"><thead><tr><th>Descripción</th><th>Potencia</th><th>Básico</th><th>Mantenimiento</th><th>Combustibles</th><th>Otros</th><th>TOTAL</th></tr></thead><tbody>${filas}</tbody></table><p class="nota">${NOTA_B4}</p>${firma('Firma del representante legal del proponente')}`);
 }
@@ -131,7 +136,7 @@ export function reporteResumen(c: ProyectoCalculado): string {
   return documento('Resumen general', `<h1>RESUMEN GENERAL DEL PRESUPUESTO</h1><h2>(en ${MONEDA(p)})</h2>${cabecera(p)}
 <h2><b>Por módulos</b></h2><table class="t"><thead><tr><th>Módulo</th><th>Total</th><th>%</th></tr></thead><tbody>${modulos}<tr class="tot"><td>TOTAL PRESUPUESTO</td><td class="n">${num(c.total, d)}</td><td class="n">100,00 %</td></tr></tbody></table><br>
 <h2><b>Por rubros (costo directo de insumos)</b></h2><table class="t"><thead><tr><th>Rubro</th><th>Monto</th><th>%</th></tr></thead><tbody>${rubros.map((r) => `<tr><td>${r.nombre}</td><td class="n">${num(r.monto, d)}</td><td class="n">${num(r.porcentaje, 2)} %</td></tr>`).join('')}</tbody></table><br>
-<h2><b>Por grupos</b></h2><table class="t"><thead><tr><th>Grupo</th><th>Monto</th></tr></thead><tbody>${grupos.map((g) => `<tr><td>${esc(g.grupo)}</td><td class="n">${num(g.monto, d)}</td></tr>`).join('')}</tbody></table>
+${grupos.length > 1 ? `<h2><b>Por grupos</b></h2><table class="t"><thead><tr><th>Grupo</th><th>Monto</th></tr></thead><tbody>${grupos.map((g) => `<tr><td>${esc(g.grupo)}</td><td class="n">${num(g.monto, d)}</td></tr>`).join('')}</tbody></table>` : ''}
 <p><b>${esc(montoALiteral(c.total, MONEDA(p)))}</b></p>${firmasProyecto(p)}`);
 }
 
@@ -142,7 +147,7 @@ export function reporteDesgloseInsumos(c: ProyectoCalculado): string {
   const des = desgloseInsumos(c);
   const secciones = RUBROS.map(([r, nombre]) => {
     const total = des[r].reduce((a, f) => a + f.monto, 0);
-    const filas = des[r].map((f, k) => `<tr><td class="c">${k + 1}</td><td>${esc(f.insumo.descripcion)}</td><td class="c">${esc(f.insumo.unidad)}</td><td class="n">${num(f.cantidad, 2)}</td><td class="n">${num(f.insumo.precio, 3)}</td><td class="n">${num(f.monto, d)}</td></tr>`).join('');
+    const filas = des[r].map((f, k) => `<tr><td class="c">${k + 1}</td><td>${esc(nombreInsumo(f.insumo.descripcion))}</td><td class="c">${esc(f.insumo.unidad)}</td><td class="n">${num(f.cantidad, 2)}</td><td class="n">${num(f.insumo.precio, 3)}</td><td class="n">${num(f.monto, d)}</td></tr>`).join('');
     return des[r].length ? `<h2><b>${nombre}</b></h2><table class="t"><thead><tr><th>N°</th><th>Descripción</th><th>Unidad</th><th>Cantidad</th><th>P. unitario</th><th>Monto</th></tr></thead><tbody>${filas}<tr class="sub"><td colspan="5" class="n">Total ${nombre.toLowerCase()}</td><td class="n">${num(total, d)}</td></tr></tbody></table>` : '';
   }).join('<br>');
   return documento('Desglose de insumos', `<h1>DESGLOSE GENERAL DE INSUMOS</h1><h2>(requerimiento total del proyecto)</h2>${cabecera(p)}${secciones}`);

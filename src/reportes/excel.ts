@@ -1,6 +1,8 @@
 import type { ProyectoCalculado } from '../nucleo/presupuesto';
 import { desgloseInsumos } from '../nucleo/presupuesto';
 import { montoALiteral } from '../nucleo/literal';
+import { redondear } from '../nucleo/calculo';
+import { nombreInsumo } from './formato';
 
 /** Exporta el presupuesto (B-1) y el desglose de insumos a un libro de Excel (.xlsx). */
 export async function presupuestoAExcel(c: ProyectoCalculado): Promise<Uint8Array> {
@@ -21,8 +23,8 @@ export async function presupuestoAExcel(c: ProyectoCalculado): Promise<Uint8Arra
   for (const m of c.modulos) {
     if (c.modulos.length > 1) hoja.addRow(['', m.nombre]).font = { bold: true };
     for (const x of m.partidas) {
-      const fila = hoja.addRow([++n, x.partida.descripcion, x.partida.unidad, x.partida.cantidad, x.precioUnitario, null]);
-      fila.getCell(6).value = { formula: `D${fila.number}*E${fila.number}`, result: x.parcial };
+      const fila = hoja.addRow([++n, x.partida.descripcion, x.partida.unidad, redondear(x.partida.cantidad, 2), x.precioUnitario, null]);
+      fila.getCell(6).value = { formula: `ROUND(D${fila.number}*E${fila.number},${c.decimales})`, result: x.parcial };
       fila.getCell(4).numFmt = '#,##0.00'; fila.getCell(5).numFmt = fmt; fila.getCell(6).numFmt = fmt;
     }
   }
@@ -38,7 +40,7 @@ export async function presupuestoAExcel(c: ProyectoCalculado): Promise<Uint8Arra
   const h2 = wb.addWorksheet('Insumos (B-3)');
   h2.addRow(['Rubro', 'Descripción', 'Unidad', 'Precio unitario', 'Cantidad total', 'Monto']).font = { bold: true };
   for (const [r, nombre] of [['M', 'Materiales'], ['O', 'Mano de obra'], ['E', 'Equipo']] as const) {
-    for (const f of des[r]) h2.addRow([nombre, f.insumo.descripcion, f.insumo.unidad, f.insumo.precio, f.cantidad, f.monto]);
+    for (const f of des[r]) h2.addRow([nombre, nombreInsumo(f.insumo.descripcion), f.insumo.unidad, f.insumo.precio, f.cantidad, f.monto]);
   }
   h2.columns = [{ width: 14 }, { width: 58 }, { width: 9 }, { width: 15 }, { width: 15 }, { width: 15 }];
   return new Uint8Array(await wb.xlsx.writeBuffer());

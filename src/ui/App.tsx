@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Calculator24Regular, ClipboardPaste24Regular, Database24Regular, DocumentAdd24Regular, DocumentPdf24Regular, FolderOpen24Regular, ArrowExport24Regular, ArrowImport24Regular,
-  ArrowRedo24Regular, ArrowUndo24Regular, Delete24Regular, Print24Regular, Save24Regular, Sparkle24Regular, Table24Regular, Copy24Regular, DocumentTable24Regular, SaveEdit24Regular, Cut24Regular, ArrowSwap24Regular, ArrowSync24Regular, CalendarLtr24Regular,
+  ArrowRedo24Regular, ArrowUndo24Regular, Delete24Regular, Print24Regular, Save24Regular, Toolbox24Regular, Table24Regular, Copy24Regular, DocumentTable24Regular, SaveEdit24Regular, Cut24Regular, ArrowSwap24Regular, ArrowSync24Regular, CalendarLtr24Regular,
   Add24Regular, ArrowUp24Regular, ArrowDown24Regular, CopyAdd24Regular, Ruler24Regular, TextBulletListSquare24Regular, DataBarVertical24Regular, Search24Regular, SaveCopy24Regular, ArrowMove24Regular } from '@fluentui/react-icons';
 import { REPORTES } from '../reportes/indice';
 import { abrirBase, abrirProyecto, abrirProyectoPrescom, descargarReporteHtml, guardarReportePdf, exportarBase, exportarExcel, guardarProyecto, imprimirReporte, importarBasesPrescom } from './acciones';
@@ -14,7 +14,7 @@ import { nuevaPartidaDirecta } from '../nucleo/operaciones';
 import { guardarArchivo } from './persistencia';
 import { nativo } from './persistencia';
 import { duplicarPartida, eliminarPartida, moverPartida } from '../nucleo/operaciones';
-import { Asistente } from './pantallas/Asistente';
+import { CajaHerramientas } from './pantallas/CajaHerramientas';
 import { BaseDatosPantalla, crearBaseVacia } from './pantallas/BaseDatos';
 import { ImportarIA } from './pantallas/ImportarIA';
 import { NuevoProyecto } from './pantallas/NuevoProyecto';
@@ -72,7 +72,9 @@ async function pegarPartidasDelPortapapeles() {
   let texto = '';
   try { texto = await navigator.clipboard.readText(); } catch { /* sin acceso */ }
   const despues = proyecto.partidas[seleccion]?.modulo === m ? seleccion : undefined;
-  if (portapapeles && (!texto || texto === textoCopiado)) {
+  // Windows cambia los saltos de línea del portapapeles (\r\n): se comparan normalizados
+  const igual = (a: string, b: string) => a.replace(/\r\n?/g, '\n').trim() === b.replace(/\r\n?/g, '\n').trim();
+  if (portapapeles && (!texto.trim() || igual(texto, textoCopiado))) {
     const c = portapapeles;
     let pos: number[] = [];
     cambiar((p) => { pos = pegarPartidas(p, c, m, despues); }, `${c.partidas.length} partida(s) pegada(s)`);
@@ -147,7 +149,7 @@ export default function App() {
         cmd('bases-prescom', 'Bases PRESCOM', <Database24Regular />, () => void importarBasesPrescom(), { ayuda: 'Elija la carpeta «datos» de PRESCOM' })] },
       { titulo: 'Exportar', comandos: [cmd('excel', 'Excel', <DocumentTable24Regular />, () => void exportarExcel(), { ayuda: 'Presupuesto en Excel (.xlsx)' }),
         cmd('msproject', 'MS Project', <CalendarLtr24Regular />, () => void exportarMsProjectArchivo(), { ayuda: 'Cronograma en XML para abrir con Microsoft Project' })] },
-      { titulo: 'IA', comandos: [cmd('importar-ia-archivo', 'Importar de IA', <ClipboardPaste24Regular />, () => setPegar(true), { ayuda: 'Proyecto, datos o precios preparados por una IA' })] },
+      { titulo: 'Datos', comandos: [cmd('importar-ia-archivo', 'Importar datos', <ClipboardPaste24Regular />, () => setPegar(true), { ayuda: 'Cargar un proyecto, una base o una lista de precios en formato JSON de Civix' })] },
     ],
     inicio: [
       { titulo: 'Deshacer', comandos: [cmd('deshacer', 'Deshacer', <ArrowUndo24Regular />, deshacer, { deshabilitado: !e.deshacer.length, ayuda: 'Ctrl+Z' }), cmd('rehacer', 'Rehacer', <ArrowRedo24Regular />, rehacer, { deshabilitado: !e.rehacer.length, ayuda: 'Ctrl+Y' })] },
@@ -172,22 +174,21 @@ export default function App() {
         cmd('cambiar-item', 'Cambiar ítem', <ArrowSwap24Regular />, conSel((pos) => abrirDialogo({ tipo: 'cambiar-item', pos })), { ayuda: 'Reemplazar el análisis por otro ítem de una base, conservando la cantidad' }),
         cmd('guardar-en-base', 'A la base', <SaveCopy24Regular />, conSel((pos) => abrirDialogo({ tipo: 'guardar-en-base', pos })), { ayuda: 'Guardar este análisis en una base de datos para reutilizarlo' }),
       ] },
-      { titulo: 'Herramientas', comandos: [cmd('calculadora', 'Calculadoras', <Calculator24Regular />, () => abrirDialogo({ tipo: 'calculadora' }), { ayuda: 'Peso del fierro (H°A°) y madera en pies tablares' }),
-        cmd('asistente', 'Asistente', <Sparkle24Regular />, alternarAsistente, { ayuda: 'Escriba órdenes o pegue lo que le preparó una IA' })] },
+      { titulo: 'Herramientas', comandos: [cmd('herramientas', 'Caja de herramientas', <Toolbox24Regular />, alternarAsistente, { ayuda: 'Áreas y volúmenes, dosificación de hormigón, ladrillos, fierro, madera, tuberías, unidades y montos' })] },
     ],
     insumos: [
       { titulo: 'Precios del proyecto', comandos: [
-        cmd('actualizar-precios', 'Actualizar con IA', <ArrowImport24Regular />, () => setPegar(true), { ayuda: 'Copie la lista de insumos, pásela a una IA con el documento de costos y pegue su respuesta' }),
+        cmd('actualizar-precios', 'Importar precios', <ArrowImport24Regular />, () => setPegar(true), { ayuda: 'Cargar una lista de precios (JSON); antes de aplicarla le muestra qué cambia' }),
         cmd('sincronizar-base', 'Tomar de la base', <ArrowSync24Regular />, () => abrirDialogo({ tipo: 'sincronizar' }), { ayuda: 'Copiar al proyecto los precios de una base de datos (mismo nombre y rubro)' }),
         cmd('limpiar-insumos', 'Quitar sin uso', <Delete24Regular />, () => cambiar((p) => { const n = eliminarInsumosSinUso(p); avisar(n ? `${n} insumo(s) sin uso eliminados` : 'Todos los insumos se usan'); }), { ayuda: 'Eliminar los insumos que ninguna partida usa' }),
       ] },
-      { titulo: 'Asistente', comandos: [cmd('asistente5', 'Asistente', <Sparkle24Regular />, alternarAsistente)] },
+      { titulo: 'Herramientas', comandos: [cmd('herramientas-insumos', 'Caja de herramientas', <Toolbox24Regular />, alternarAsistente, { ayuda: 'Áreas y volúmenes, dosificación de hormigón, ladrillos, fierro, madera, tuberías, unidades y montos' })] },
     ],
     base: [
       { titulo: 'Bases de datos', comandos: [cmd('nueva-base', 'Nueva base', <Add24Regular />, crearBaseVacia, { ayuda: 'Crear una base de datos vacía' }), cmd('bases-prescom2', 'Importar de PRESCOM', <ArrowImport24Regular />, () => void importarBasesPrescom()), cmd('abrir-base', 'Abrir .civbd', <FolderOpen24Regular />, () => void abrirBase()),
         cmd('exportar-base', 'Guardar base', <ArrowExport24Regular />, () => baseActiva && exportarBase(baseActiva), { deshabilitado: !baseActiva }),
         cmd('quitar-base', 'Quitar base', <Delete24Regular />, () => { if (baseActiva && window.confirm(`¿Quitar la base «${baseActiva.nombre}» de Civix? (Guárdela antes si la necesita: no se puede deshacer)`)) { quitarBase(baseActiva.nombre); avisar(`Base "${baseActiva.nombre}" quitada de la lista`); } }, { deshabilitado: !baseActiva, ayuda: 'Quita de Civix la base elegida (no borra archivos guardados)' })] },
-      { titulo: 'IA', comandos: [cmd('pegar-ia', 'Importar de IA', <ClipboardPaste24Regular />, () => setPegar(true), { ayuda: 'Datos, proyecto o lista de precios preparados por una IA' }), cmd('asistente2', 'Asistente', <Sparkle24Regular />, alternarAsistente)] },
+      { titulo: 'Datos', comandos: [cmd('pegar-ia', 'Importar datos', <ClipboardPaste24Regular />, () => setPegar(true), { ayuda: 'Cargar insumos e ítems, un proyecto o una lista de precios (JSON de Civix)' }), cmd('herramientas-base', 'Caja de herramientas', <Toolbox24Regular />, alternarAsistente, { ayuda: 'Áreas y volúmenes, dosificación de hormigón, ladrillos, fierro, madera, tuberías, unidades y montos' })] },
     ],
     reportes: [
       { titulo: 'Formularios SABS', comandos: REPORTES.slice(0, 5).map((r) => cmd(`rep-${r.id}`, r.id, <DocumentPdf24Regular />, () => elegirReporte(r.id), { ayuda: r.titulo })) },
@@ -199,8 +200,8 @@ export default function App() {
       cmd('ver-flujo', 'Flujo de inversiones', <DataBarVertical24Regular />, () => { elegirReporte('flujo'); irAPestana('reportes'); }, { ayuda: 'Plan de desembolsos mensual y curva S' }),
       cmd('ver-personal', 'Flujo de personal', <DataBarVertical24Regular />, () => { elegirReporte('personal'); irAPestana('reportes'); }, { ayuda: 'Horas-hombre y jornales por mes' }),
       cmd('msproject2', 'MS Project', <CalendarLtr24Regular />, () => void exportarMsProjectArchivo(), { ayuda: 'Exportar el cronograma para Microsoft Project' }),
-      cmd('asistente4', 'Asistente', <Sparkle24Regular />, alternarAsistente)] }],
-    config: [{ titulo: 'Proyecto', comandos: [cmd('asistente3', 'Asistente', <Sparkle24Regular />, alternarAsistente)] }],
+      cmd('herramientas-cron', 'Caja de herramientas', <Toolbox24Regular />, alternarAsistente, { ayuda: 'Áreas y volúmenes, dosificación de hormigón, ladrillos, fierro, madera, tuberías, unidades y montos' })] }],
+    config: [{ titulo: 'Herramientas', comandos: [cmd('herramientas-config', 'Caja de herramientas', <Toolbox24Regular />, alternarAsistente, { ayuda: 'Áreas y volúmenes, dosificación de hormigón, ladrillos, fierro, madera, tuberías, unidades y montos' })] }],
   };
 
   return (
@@ -214,7 +215,7 @@ export default function App() {
             {e.pestana === 'archivo' ? <ArchivoPantalla alNuevo={() => setNuevoAbierto(true)} /> : e.pestana === 'inicio' ? <Presupuesto /> : e.pestana === 'insumos' ? <InsumosPantalla /> : e.pestana === 'base' ? <BaseDatosPantalla /> : e.pestana === 'cronograma' ? <CronogramaPantalla /> : e.pestana === 'reportes' ? <ReportesPantalla /> : <ConfiguracionPantalla />}
           </Protector>
         </div>
-        {e.asistente && <Asistente alCerrar={alternarAsistente} />}
+        {e.asistente && <CajaHerramientas alCerrar={alternarAsistente} />}
       </main>
       <footer className="estado"><span data-testid="aviso" key={e.aviso} className={e.aviso ? 'aviso-flash' : ''}>{e.aviso || 'Listo'}</span><span>Total: <b data-testid="total-pie">{e.proyecto.moneda === 1 ? '$US' : 'Bs'} {num(total)}</b></span></footer>
       {(pegar || e.importarTexto !== null) && <ImportarIA textoInicial={e.importarTexto ?? ''} alCerrar={() => { setPegar(false); solicitarImportacion(null); }} />}

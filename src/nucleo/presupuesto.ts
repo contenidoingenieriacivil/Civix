@@ -28,6 +28,9 @@ export interface ProyectoCalculado {
   decimales: number;
 }
 
+/** Decimales de las cantidades del presupuesto (como se imprimen en el B-1). */
+export const DECIMALES_CANTIDAD = 2;
+
 export function mapaInsumos(p: Proyecto): Map<number, Insumo> {
   return new Map(p.insumos.map((i) => [i.id, i]));
 }
@@ -45,7 +48,8 @@ export function calcularProyecto(p: Proyecto, decimales = 2): ProyectoCalculado 
         : calcularItem(partida.item, insumos, p.plantilla, decimales);
       return {
         partida, numero: n + 1, apu, precioUnitario: apu.precioUnitario,
-        parcial: parcial(partida.cantidad, apu.precioUnitario, decimales),
+        // la cantidad se usa con los 2 decimales con que se imprime, para que «cantidad × P.U.» del B-1 cuadre
+        parcial: parcial(redondear(partida.cantidad, DECIMALES_CANTIDAD), apu.precioUnitario, decimales),
       };
     });
     return { indice: k + 1, nombre: m.nombre, partidas, total: redondear(partidas.reduce((a, x) => a + x.parcial, 0), decimales) };
@@ -103,7 +107,7 @@ export function costosEquipos(c: ProyectoCalculado): CostoEquipo[] {
   return desgloseInsumos(c).E.map(({ insumo }) => {
     const datos = c.proyecto.equipos?.[insumo.id];
     return datos ? costoHorarioEquipo({ ...datos, descripcion: insumo.descripcion })
-      : { descripcion: insumo.descripcion, potencia: 0, basico: insumo.precio, mantenimiento: 0, combustibles: 0, otros: 0 };
+      : { descripcion: insumo.descripcion, potencia: 0, basico: insumo.precio, mantenimiento: 0, combustibles: 0, otros: 0, sinDetalle: true };
   });
 }
 

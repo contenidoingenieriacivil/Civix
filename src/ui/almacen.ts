@@ -34,7 +34,7 @@ export interface Estado {
 
 export interface Archivo { ruta: string | null; modificado: boolean }
 
-export type Dialogo = { tipo: 'apu' | 'computo' | 'especificacion' | 'guardar-en-base' | 'mover-modulo' | 'cambiar-item'; pos: number } | { tipo: 'nueva-partida' | 'buscar' | 'calculadora' | 'sincronizar' | 'unir-modulo' } | { tipo: 'reemplazar-insumo'; id: number };
+export type Dialogo = { tipo: 'apu' | 'computo' | 'especificacion' | 'guardar-en-base' | 'mover-modulo' | 'cambiar-item'; pos: number } | { tipo: 'nueva-partida' | 'buscar' | 'sincronizar' | 'unir-modulo' } | { tipo: 'reemplazar-insumo'; id: number };
 
 let estado: Estado = { proyecto: nuevoProyecto('Proyecto nuevo', PLANTILLA_SABS), bases: [], modulo: 1, deshacer: [], rehacer: [], aviso: '', seleccion: -1, reporte: 'B-1', asistente: false, pestana: 'inicio', importarTexto: null, baseSel: '', dialogo: null, archivo: { ruta: null, modificado: false }, pregunta: null, alcance: 'todo', lote: null };
 const oyentes = new Set<() => void>();

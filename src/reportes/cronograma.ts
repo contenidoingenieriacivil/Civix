@@ -37,12 +37,13 @@ export function formularioA8(p: Proyecto): string {
   const g = programar(p);
   const meses = mesesDelPrograma(g);
   const total = Math.max(1, g.diasCalendario);
-  const cabMeses = meses.map((m) => `<div class="a8-mes" style="left:${(m.desde / total) * 100}%;width:${(m.dias / total) * 100}%">${m.etiqueta}</div>`).join('');
+  // los meses muy cortos (inicio o fin parcial) no llevan nombre para que no se encimen
+  const cabMeses = meses.map((m) => `<div class="a8-mes" style="left:${(m.desde / total) * 100}%;width:${(m.dias / total) * 100}%">${m.dias / total < 0.03 ? '' : m.etiqueta}</div>`).join('');
   const filas = g.modulos.flatMap((m) => [
     `<tr class="sub"><td colspan="5">${esc(m.nombre)}</td><td class="a8-barras"></td></tr>`,
     ...m.actividades.map((a) => {
       const b = barra(g, a.inicio, a.fin);
-      return `<tr><td class="c">${a.modulo}.${a.posicion}</td><td>${esc(a.partida.descripcion)}</td><td class="n">${num(a.duracion, Number.isInteger(a.duracion) ? 0 : 2)}</td><td class="c">${fechaBo(a.inicio)}</td><td class="c">${fechaBo(a.fin)}</td>
+      return `<tr><td class="c">${a.modulo}.${a.posicion}</td><td>${esc(a.partida.descripcion)}</td><td class="n">${num(a.duracion, 2)}</td><td class="c">${fechaBo(a.inicio)}</td><td class="c">${fechaBo(a.fin)}</td>
 <td class="a8-barras">${meses.map((x) => `<i class="a8-linea" style="left:${(x.desde / total) * 100}%"></i>`).join('')}<div class="a8-barra${a.critica ? ' critica' : ''}" style="left:${b.izq}%;width:${b.ancho}%"></div></td></tr>`;
     }),
   ]).join('');

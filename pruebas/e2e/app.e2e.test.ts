@@ -146,42 +146,30 @@ describe('interfaz de Civix', () => {
     expect(cuerpo).toMatch(/7,44/);
   });
 
-  it('el asistente interpreta frases, muestra la vista previa y aplica', async () => {
+  it('caja de herramientas: calcula y lleva el resultado a la partida (cantidad o cómputo)', async () => {
     await pegarPaquete(PAQUETE);
     await page.getByTestId('cerrar-pegar').click();
     await page.getByTestId('fila-item').first().click();
     await page.getByTestId('anadir-presupuesto').click();
     await pestana('inicio');
-    const antes = await totalGeneral();
-    await cmd('asistente');
-    await page.getByTestId('orden-texto').fill('sube 10% el cemento\ncambia las cargas sociales a 71,18%\nhaz magia');
-    await page.getByTestId('interpretar').click();
-    const vista = await page.getByTestId('vista-previa-ordenes').innerText();
-    expect(vista).toMatch(/Precios subidos 10 %/);
-    expect(vista).toMatch(/55 % → 71.18 %/);
-    expect(vista).toMatch(/No entendí: «haz magia»/);
-    expect(await totalGeneral()).toBe(antes); // nada cambia hasta confirmar
-    await page.getByTestId('aplicar-ordenes').click();
-    expect(await totalGeneral()).not.toBe(antes);
-    await cmd('deshacer');
-    expect(await totalGeneral()).toBe(antes);
-    // una orden de reporte lleva a la pestaña de reportes
-    await page.getByTestId('orden-texto').fill('genera el B-2');
-    await page.getByTestId('interpretar').click();
-    await page.getByTestId('aplicar-ordenes').click();
-    await page.frameLocator('#vista-reporte').locator('h1', { hasText: 'FORMULARIO B-2' }).first().waitFor();
-  });
-
-  it('acepta órdenes en JSON redactadas por otra IA y rechaza JSON roto', async () => {
-    await cmd('asistente');
-    await page.getByTestId('orden-texto').fill('[{"accion":"crear_modulo","nombre":"obra fina"}]');
-    await page.getByTestId('interpretar').click();
-    expect(await page.getByTestId('vista-previa-ordenes').innerText()).toContain('Módulo "OBRA FINA" creado');
-    await page.getByTestId('aplicar-ordenes').click();
-    await page.getByTestId('modulo-2').waitFor();
-    await page.getByTestId('orden-texto').fill('[{"accion": ');
-    await page.getByTestId('interpretar').click();
-    expect(await page.getByTestId('vista-previa-ordenes').innerText()).toMatch(/JSON no válido/);
+    await page.getByTestId('fila-partida').first().locator('td').first().click();
+    await cmd('herramientas');
+    const caja = page.getByTestId('caja-herramientas');
+    await caja.getByTestId('h-forma').click();
+    await page.getByRole('option', { name: 'Prisma (losa, zapata, muro)' }).click();
+    await caja.getByTestId('h-a').fill('4'); await caja.getByTestId('h-b').fill('0,5'); await caja.getByTestId('h-c').fill('0,3');
+    expect(await caja.getByTestId('r-area').innerText()).toContain('0,600 m³');
+    await caja.getByTestId('usar-cantidad').click();
+    expect(await page.getByTestId('cantidad').first().inputValue()).toBe('0,60');
+    await caja.getByTestId('usar-computo').click();
+    expect(await page.getByTestId('cantidad-computo').innerText()).toContain('1,20');
+    await caja.getByTestId('h-sec-hormigon').click();
+    expect(await caja.getByTestId('r-hormigon').innerText()).toMatch(/bolsas/);
+    await caja.getByTestId('h-sec-fierro').click();
+    await caja.getByTestId('h-d').fill('10'); await caja.getByTestId('h-l').fill('12'); await caja.getByTestId('h-p').fill('10');
+    expect(await caja.getByTestId('r-fierro').innerText()).toContain('74,07 kg');
+    await caja.getByTestId('cerrar-herramientas').click();
+    expect(await page.getByTestId('caja-herramientas').count()).toBe(0);
   });
 
   it('rechaza un paquete de IA con errores sin guardar nada', async () => {

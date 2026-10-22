@@ -5,6 +5,9 @@ export function num(x: number, decimales = 2): string {
   return `${x < 0 ? '-' : ''}${miles}${decimales ? ',' + d : ''}`;
 }
 
+/** Nombre del insumo para imprimir: sin la marca «[Bs 95,00]» que distingue variantes de precio de un mismo insumo. */
+export const nombreInsumo = (s: string) => s.replace(/\s*\[Bs [\d.,]+\]$/, '');
+
 export const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -19,7 +22,7 @@ export const ESTILO_REPORTE = `
 * { box-sizing: border-box; }
 body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #111; margin: 0; }
 h1 { font-size: 12pt; text-align: center; margin: 0 0 2mm; }
-h2 { font-size: 10pt; text-align: center; margin: 0 0 3mm; font-weight: normal; }
+h2 { font-size: 10pt; text-align: center; margin: 4mm 0 3mm; font-weight: normal; }
 .meta { width: 100%; margin: 2mm 0 4mm; border-collapse: collapse; }
 .meta td { padding: 0.5mm 1mm; vertical-align: top; }
 table.t { width: 100%; border-collapse: collapse; }

@@ -7,7 +7,7 @@ import { calcularProyecto } from '../../nucleo/presupuesto';
 import type { Linea, Rubro } from '../../nucleo/tipos';
 import { num } from '../../reportes/formato';
 import { abrirDialogo, avisar, cambiar, elegirPartida, guardarBase, irAModulo, irAPartida, useEstado } from '../almacen';
-import { igualarPrecioUnitario, kgPorMetro, pesoFierro, piesTablares, reemplazarInsumo, reemplazarItemDePartida, sincronizarPreciosConBase, unirModulos } from '../../nucleo/herramientas';
+import { igualarPrecioUnitario, reemplazarInsumo, reemplazarItemDePartida, sincronizarPreciosConBase, unirModulos } from '../../nucleo/herramientas';
 import { leerNumero, Numero, Texto } from '../campos';
 
 const RUBROS: [Rubro, string, 'materiales' | 'manoObra' | 'equipo'][] = [['M', 'Materiales', 'materiales'], ['O', 'Mano de obra', 'manoObra'], ['E', 'Equipo y maquinaria', 'equipo']];
@@ -55,7 +55,6 @@ export function Dialogos() {
     case 'guardar-en-base': return <DialogoGuardarEnBase pos={d.pos} />;
     case 'mover-modulo': return <DialogoMoverModulo pos={d.pos} />;
     case 'cambiar-item': return <DialogoCambiarItem pos={d.pos} />;
-    case 'calculadora': return <DialogoCalculadora />;
     case 'sincronizar': return <DialogoSincronizar />;
     case 'unir-modulo': return <DialogoUnirModulo />;
     case 'reemplazar-insumo': return <DialogoReemplazarInsumo id={d.id} />;
@@ -339,27 +338,6 @@ function DialogoCambiarItem({ pos }: { pos: number }) {
         </ul>
         <p className="nota-ui">Se conserva la cantidad, el cómputo y el plazo; cambian la descripción, la unidad y el análisis de precio unitario.</p>
       </>)}
-    </Marco>
-  );
-}
-
-function DialogoCalculadora() {
-  const [f, setF] = useState({ d: '12', l: '12', n: '1' });
-  const [m, setM] = useState({ e: '2', a: '4', l: '3', n: '1' });
-  const v = (s: string) => { const x = leerNumero(s); return x !== null && x >= 0 ? x : null; };
-  const kg = v(f.d) !== null && v(f.l) !== null && v(f.n) !== null ? pesoFierro(v(f.d)!, v(f.l)!, v(f.n)!) : null;
-  const pies = [m.e, m.a, m.l, m.n].every((x) => v(x) !== null) ? piesTablares(v(m.e)!, v(m.a)!, v(m.l)!, v(m.n)!) : null;
-  const campo = (t: string, val: string, set: (s: string) => void, id: string) => <label className="campo">{t}<Input value={val} onChange={(_, d) => set(d.value)} style={{ width: 110 }} data-testid={id} /></label>;
-  return (
-    <Marco id="dialogo-calculadora" ancho={700} titulo="Calculadoras">
-      <h4>Peso del fierro (acero de refuerzo)</h4>
-      <div className="barra-filtros">{campo('Diámetro (mm)', f.d, (s) => setF({ ...f, d: s }), 'calc-diametro')}{campo('Largo de cada barra (m)', f.l, (s) => setF({ ...f, l: s }), 'calc-largo')}{campo('N° de barras', f.n, (s) => setF({ ...f, n: s }), 'calc-barras')}
-        <span className="literal">= <b data-testid="calc-kg">{kg !== null ? `${num(kg, 2)} kg` : '—'}</b>{v(f.d) !== null ? ` (${num(kgPorMetro(v(f.d)!), 3)} kg/m)` : ''}</span></div>
-      <table className="grilla compacta" style={{ maxWidth: 520 }}><thead><tr><th>Ø mm</th>{[6, 8, 10, 12, 16, 20, 25, 32].map((d) => <th key={d} className="n">{d}</th>)}</tr></thead><tbody><tr><td>kg/m</td>{[6, 8, 10, 12, 16, 20, 25, 32].map((d) => <td key={d} className="n">{num(kgPorMetro(d), 3)}</td>)}</tr></tbody></table>
-      <h4>Madera (pies tablares, pie²)</h4>
-      <div className="barra-filtros">{campo('Espesor (pulg)', m.e, (s) => setM({ ...m, e: s }), 'calc-espesor')}{campo('Ancho (pulg)', m.a, (s) => setM({ ...m, a: s }), 'calc-ancho')}{campo('Largo (m)', m.l, (s) => setM({ ...m, l: s }), 'calc-largo-madera')}{campo('Piezas', m.n, (s) => setM({ ...m, n: s }), 'calc-piezas')}
-        <span className="literal">= <b data-testid="calc-pies">{pies !== null ? `${num(pies, 2)} pie²` : '—'}</b></span></div>
-      <p className="nota-ui">Fierro: kg/m = d² ÷ 162. Madera: espesor × ancho × largo (pies) ÷ 12.</p>
     </Marco>
   );
 }

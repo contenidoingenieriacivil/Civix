@@ -58,16 +58,17 @@ export function leerAnalisis(md) {
     if (/^Nº$/.test(c[0] ?? '') && /Insumo/i.test(c[2] ?? '')) {
       const e = zona.length ? leerEncabezado(zona) : null;
       zona = [];
-      if (e && e.descripcion) { it = { descripcion: e.descripcion, unidad: e.unidad, insumos: [], pct: {}, adoptado: null, total: null }; items.push(it); rubro = null; }
+      if (e && e.descripcion) { it = { descripcion: e.descripcion, unidad: e.unidad, insumos: [], pct: {}, impreso: {}, adoptado: null, total: null }; items.push(it); rubro = null; }
       continue;
     }
     if (!/^[-: ]+$/.test(c.join(''))) zona = [];
     if (it && !it.unidad && it.insumos.length === 0 && c.length === 2 && c[0] && !/^(Proyecto|Cliente|---)/i.test(c[0]) && UNIDAD_APU.test(c[1])) { it.descripcion += ` ${c[0]}`; it.unidad = c[1]; continue; }
     const h = /^Item:\s*(.+)$/.exec(c[0] ?? '');
-    if (h && /^Unidad:/i.test(c[1] ?? '')) { it = { descripcion: h[1].trim(), unidad: c[1].replace(/^Unidad:\s*/i, '').trim(), insumos: [], pct: {}, adoptado: null, total: null }; items.push(it); rubro = null; continue; }
+    if (h && /^Unidad:/i.test(c[1] ?? '')) { it = { descripcion: h[1].trim(), unidad: c[1].replace(/^Unidad:\s*/i, '').trim(), insumos: [], pct: {}, impreso: {}, adoptado: null, total: null }; items.push(it); rubro = null; continue; }
     if (!it || /^-+$/.test(c[0] ?? '') || c[0] === 'Nº') continue;
     // el encabezado de rubro trae la letra en la columna 0 o 1 y el nombre en la 1 o 2
-    const nombreRubro = [c[2], c[1]].find((x) => /^(MATERIALES|MANO DE OBRA|EQUIPO)/i.test(x ?? ''));
+    // (en mayúsculas y sin cantidades: «Equipo de soldadura» es un insumo, no el título del rubro)
+    const nombreRubro = !num(c[4]) && !num(c[5]) ? [c[2], c[1]].find((x) => /^(MATERIALES|MANO DE OBRA|EQUIPO)/.test(x ?? '')) : undefined;
     if (nombreRubro && /^[A-Q]?$/.test(c[0] === '' || /^[A-Q]$/.test(c[0]) ? c[0] : c[1] ?? '')) {
       rubro = /^MAT/i.test(nombreRubro) ? 'material' : /^MANO/i.test(nombreRubro) ? 'mano_de_obra' : 'equipo';
       continue;
@@ -79,10 +80,12 @@ export function leerAnalisis(md) {
       if (cant !== null && pu !== null) {
         // la cantidad impresa puede estar redondeada: si no reproduce el parcial, se recupera de él
         const rend = parcial !== null && pu > 0 && Math.abs(Math.round(cant * pu * 100) / 100 - parcial) > 0.005 ? parcial / pu : cant;
-        it.insumos.push({ descripcion: c[2], unidad: c[3], rubro, rendimiento: rend, precio: pu });
+        it.insumos.push({ descripcion: c[2], unidad: c[3], rubro, rendimiento: rend, precio: pu, parcial });
       }
       continue;
     }
+    // valor impreso de cada parámetro (D, E, F, O, G, H, I, J, L, M, N, P, Q) para comparar con el cálculo
+    if (/^[A-Q]$/.test(letra) && num(c[6]) !== null) it.impreso[letra] = num(c[6]);
     const m = /^([\d.,]+)%\s*de/.exec(c[4] ?? '');
     if (/^[A-Q]$/.test(letra) && m) { it.pct[letra] = Number(m[1].replace(',', '.')); continue; }
     if (letra === 'Q') it.total = num(c[6]);
@@ -228,6 +231,7 @@ function main() {
   const strip = (k, v) => (k.startsWith('_') ? undefined : v);
   writeFileSync(`${salida}-base.json`, JSON.stringify({ civix: 1, insumos, items: baseItems }, strip));
   writeFileSync(`${salida}-proyecto.json`, JSON.stringify(proyecto, strip));
+  writeFileSync(`${salida}-apu-impreso.json`, JSON.stringify(Object.fromEntries(apu.filter((a) => a.nombre).map((a) => [a.nombre, { impreso: a.impreso, adoptado: a.adoptado, lineas: a.insumos.map((l) => ({ descripcion: l.descripcion, rendimiento: l.rendimiento, precio: l.precio, parcial: l.parcial })) }]))));
   writeFileSync(`${salida}-informe.json`, JSON.stringify({ ...informe, analisis: apu.length, computos: comp.length, especificaciones: esp.length }, null, 1));
   // referencia para pruebas: unitario y parcial impresos por partida, en el mismo orden que el proyecto
   writeFileSync(`${salida}-esperado.json`, JSON.stringify(todas.map(({ p }) => ({ n: p._n, descripcion: p.descripcion, unitario: p.precioUnitario, parcial: p._parcial, conAnalisis: !!p.item }))));

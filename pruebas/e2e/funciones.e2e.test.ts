@@ -78,9 +78,12 @@ describe('funciones de PRESCOM en la interfaz', () => {
     await page.keyboard.press('Control+c');
     await page.waitForTimeout(300);
     expect(await id('aviso').innerText()).toContain('copiada');
+    // Windows devuelve el texto con saltos \r\n: debe reconocerse igual como la partida copiada (con su análisis)
+    await page.evaluate(async () => navigator.clipboard.writeText((await navigator.clipboard.readText()).replace(/\n/g, '\r\n')));
     await id('nuevo-modulo').click();
     await page.keyboard.press('Control+v');
     await expect.poll(() => id('fila-partida').count()).toBe(1);
+    expect(await id('ver-apu').count()).toBe(1); // conserva el análisis de precio unitario
     const enExcel = await page.evaluate(() => navigator.clipboard.readText());
     expect(enExcel).toContain('Hormigón simple\tm³\t10\t');
     await page.evaluate(() => navigator.clipboard.writeText('Ítem\tDescripción\tUnidad\tCantidad\tP.U.\n1\tExcavación manual\tm3\t25,5\t48,30\n2\tRelleno compactado\tm3\t20\t35'));
@@ -110,7 +113,7 @@ describe('funciones de PRESCOM en la interfaz', () => {
     expect(errores).toEqual([]);
   });
 
-  it('duplicar y unir módulos; calculadoras', async () => {
+  it('duplicar y unir módulos', async () => {
     const t = await total();
     await id('duplicar-modulo').click();
     expect(await total()).toBe(t * 2);
@@ -118,11 +121,6 @@ describe('funciones de PRESCOM en la interfaz', () => {
     await id('destino-unir').first().click();
     expect(await id('modulo-2').count()).toBe(0);
     expect(await id('fila-partida').count()).toBe(4);
-    await cmd('calculadora');
-    await id('calc-diametro').fill('10'); await id('calc-largo').fill('12'); await id('calc-barras').fill('10');
-    expect(await id('calc-kg').innerText()).toBe('74,07 kg');
-    await id('calc-espesor').fill('2'); await id('calc-ancho').fill('4'); await id('calc-largo-madera').fill('3,048'); await id('calc-piezas').fill('1');
-    expect(await id('calc-pies').innerText()).toBe('6,67 pie²');
     expect(errores).toEqual([]);
   });
 

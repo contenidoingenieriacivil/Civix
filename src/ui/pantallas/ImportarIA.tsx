@@ -73,9 +73,9 @@ export function ImportarIA({ alCerrar, textoInicial = '' }: { alCerrar: () => vo
   };
 
   return (
-    <div className="modal-fondo" onKeyDown={(e) => { if (e.key === 'Escape') alCerrar(); }}><div className="modal" role="dialog" aria-label="Importar de IA" style={{ width: 'min(900px, 96vw)' }}>
-      <h3>Importar lo que preparó una IA</h3>
-      <p className="nota-ui">Pegue el JSON. Civix detecta si son <b>datos</b> (insumos/ítems), un <b>proyecto</b> o una lista de <b>precios</b>, lo valida completo y le muestra qué cambiaría antes de guardar.</p>
+    <div className="modal-fondo" onKeyDown={(e) => { if (e.key === 'Escape') alCerrar(); }}><div className="modal" role="dialog" aria-label="Importar datos" style={{ width: 'min(900px, 96vw)' }}>
+      <h3>Importar datos (archivo JSON de Civix)</h3>
+      <p className="nota-ui">Elija el archivo o pegue su contenido. Civix detecta si son <b>datos</b> (insumos/ítems), un <b>proyecto</b> o una lista de <b>precios</b>, lo valida completo y le muestra qué cambiaría antes de guardar.</p>
       <div className="acciones">
         <Button size="small" appearance="primary" onClick={() => void elegirArchivo()} data-testid="elegir-archivo-ia">Elegir archivo .json…</Button>
         <Button size="small" onClick={() => copiar(INSTRUCCIONES_IA, 'Instrucciones de datos copiadas')} data-testid="copiar-instr-datos">Instrucciones: datos</Button>

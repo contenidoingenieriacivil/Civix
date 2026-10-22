@@ -3,7 +3,7 @@ import { flujoInversiones, requerimientoMensual, type Flujo } from '../nucleo/he
 import { montoALiteral } from '../nucleo/literal';
 import { resumenPorRubro, type ProyectoCalculado } from '../nucleo/presupuesto';
 import { CRONOGRAMA_DEFECTO } from '../nucleo/cronograma';
-import { documento, esc, num } from './formato';
+import { documento, esc, nombreInsumo, num } from './formato';
 import { cabecera, firmasProyecto } from './formularios';
 
 const MONEDA = (p: Proyecto) => (p.moneda === 1 ? 'Dólares americanos' : 'Bolivianos');
@@ -26,7 +26,7 @@ export function reporteIncidencia(c: ProyectoCalculado): string {
   return documento('Presupuesto por incidencia', `<h1>PRESUPUESTO POR INCIDENCIA</h1><h2>(partidas ordenadas por su costo · en ${MONEDA(p)})</h2>${cabecera(p)}
 ${todas.length ? `<table class="t"><thead><tr><th>N°</th><th>Ítem</th><th>Descripción</th><th>Unid.</th><th>Parcial</th><th>Incidencia</th><th>Acumulado</th><th>Clase</th></tr></thead><tbody>${filas}
 <tr class="tot"><td colspan="4" class="n">TOTAL</td><td class="n">${num(c.total, c.decimales)}</td><td class="n">100,00 %</td><td colspan="2"></td></tr></tbody></table>
-<p class="nota">Clase A: partidas que suman el 80 % del costo (controlarlas con más cuidado); B: hasta el 95 %; C: el resto.</p>` : vacio('el proyecto no tiene partidas.')}${firmasProyecto(p)}`);
+<p><b>${esc(montoALiteral(c.total, MONEDA(p)))}</b></p><p class="nota">Clase A: partidas que suman el 80 % del costo (controlarlas con más cuidado); B: hasta el 95 %; C: el resto.</p>` : vacio('el proyecto no tiene partidas.')}${firmasProyecto(p)}`);
 }
 
 /** Desglose de insumos por ítem (requerimiento de materiales, mano de obra y equipo de cada partida). */
@@ -37,7 +37,7 @@ export function reporteInsumosPorItem(c: ProyectoCalculado): string {
     const ls = ([['Materiales', x.partida.item.materiales], ['Mano de obra', x.partida.item.manoObra], ['Equipo', x.partida.item.equipo]] as const).flatMap(([r, l]) => l.map((y) => ({ r, y, i: ins.get(y.insumo) })).filter((z) => z.i));
     if (!ls.length) return '';
     return `<tr class="sub"><td colspan="6">${m.indice}.${x.numero} ${esc(x.partida.descripcion)} — ${num(x.partida.cantidad, 2)} ${esc(x.partida.unidad)}</td></tr>` +
-      ls.map(({ r, y, i }) => `<tr><td>${r}</td><td>${esc(i!.descripcion)}</td><td class="c">${esc(i!.unidad)}</td><td class="n">${num(y.rendimiento, 4)}</td><td class="n">${num(y.rendimiento * x.partida.cantidad, 2)}</td><td class="n">${num(y.rendimiento * x.partida.cantidad * i!.precio, 2)}</td></tr>`).join('');
+      ls.map(({ r, y, i }) => `<tr><td>${r}</td><td>${esc(nombreInsumo(i!.descripcion))}</td><td class="c">${esc(i!.unidad)}</td><td class="n">${num(y.rendimiento, 4)}</td><td class="n">${num(y.rendimiento * x.partida.cantidad, 2)}</td><td class="n">${num(y.rendimiento * x.partida.cantidad * i!.precio, 2)}</td></tr>`).join('');
   })).join('');
   return documento('Insumos por ítem', `<h1>DESGLOSE DE INSUMOS POR ÍTEM</h1><h2>(requerimiento de cada partida: rendimiento × cantidad)</h2>${cabecera(p)}
 ${bloques ? `<table class="t"><thead><tr><th>Rubro</th><th>Insumo</th><th>Unid.</th><th>Rendimiento</th><th>Cantidad requerida</th><th>Costo directo</th></tr></thead><tbody>${bloques}</tbody></table>` : vacio('ninguna partida tiene análisis de insumos (todas tienen precio directo).')}${firmasProyecto(p)}`);

@@ -236,15 +236,27 @@ export function flujoInversiones(p: Proyecto): Flujo {
 export function requerimientoMensual(p: Proyecto, rubro: Rubro): Flujo {
   const g = programar(p);
   const n = (p.cronograma ?? CRONOGRAMA_DEFECTO).diasLaborables;
-  const porInsumo = new Map<number, Map<string, number>>();
+  const h = (p.cronograma ?? CRONOGRAMA_DEFECTO).horasDia;
+  const porId = new Map(p.insumos.map((i) => [i.id, i]));
+  // Se agrupan las variantes de precio de un mismo insumo; la mano de obra en jornales se pasa a horas.
+  const clave = (id: number) => {
+    const i = porId.get(id);
+    if (!i) return { nombre: `Insumo ${id}`, factor: 1 };
+    const nombre = i.descripcion.replace(/\s*\[Bs [\d.,]+\]$/, '');
+    if (rubro === 'O' && /^(jorn|jornal|jornales|d[ií]a|d)$/i.test(i.unidad.trim())) return { nombre: `${nombre} (hr)`, factor: h };
+    return { nombre: `${nombre} (${rubro === 'O' ? 'hr' : i.unidad})`, factor: 1 };
+  };
+  const porNombre = new Map<string, Map<string, number>>();
+  const nombres = new Map<string, string>();
   for (const m of g.modulos) for (const a of m.actividades) {
     for (const l of a.partida.item[RUBRO_CLAVE[rubro]]) {
-      if (!porInsumo.has(l.insumo)) porInsumo.set(l.insumo, new Map());
-      repartir(porInsumo.get(l.insumo)!, a.inicio, a.fin, l.rendimiento * a.partida.cantidad, n);
+      const k = clave(l.insumo);
+      const id = sinAcentos(k.nombre); // «Topógrafo», «TOPOGRAFO» y «Topografo» son el mismo
+      if (!porNombre.has(id)) { porNombre.set(id, new Map()); nombres.set(id, k.nombre); }
+      repartir(porNombre.get(id)!, a.inicio, a.fin, l.rendimiento * a.partida.cantidad * k.factor, n);
     }
   }
-  const nombre = new Map(p.insumos.map((i) => [i.id, `${i.descripcion} (${i.unidad})`]));
-  return armarFlujo([...porInsumo].map(([id, acum]) => ({ nombre: nombre.get(id) ?? `Insumo ${id}`, acum })));
+  return armarFlujo([...porNombre].map(([id, acum]) => ({ nombre: nombres.get(id)!, acum })));
 }
 
 // --- MS Project (XML de intercambio MSPDI) ------------------------------------------------------------
