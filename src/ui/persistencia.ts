@@ -49,6 +49,8 @@ export interface Nativo {
   recientes: () => Promise<{ ruta: string; existe: boolean; fecha: string | null }[]>;
   quitarReciente: (ruta: string) => Promise<boolean>;
   imprimir: (html: string) => Promise<{ ok: boolean }>;
+  leerPortapapeles: () => Promise<string>;
+  escribirPortapapeles: (t: string) => Promise<boolean>;
   autoguardar: (clave: 'proyecto' | 'bases', texto: string) => Promise<boolean>;
   recuperar: (clave: 'proyecto' | 'bases') => Promise<string | null>;
   alVolcar: (f: () => Promise<void>) => void;
@@ -57,6 +59,16 @@ export interface Nativo {
   alAbrirRuta: (f: (ruta: string) => void) => void;
   alPedirGuardar: (f: () => Promise<boolean>) => void;
 }
+/** Portapapeles: en el programa de escritorio, el de Windows por el proceso principal; en el navegador, el del navegador. */
+export async function leerPortapapeles(): Promise<string> {
+  const n = nativo();
+  try { return n ? await n.leerPortapapeles() : await navigator.clipboard.readText(); } catch { return ''; }
+}
+export async function escribirPortapapeles(t: string): Promise<boolean> {
+  const n = nativo();
+  try { if (n) await n.escribirPortapapeles(t); else await navigator.clipboard.writeText(t); return true; } catch { return false; }
+}
+
 /** Funciones del programa de escritorio (Electron); undefined en el navegador. */
 export const nativo = (): Nativo | undefined => (typeof window !== 'undefined' ? (window as unknown as { civix?: Nativo }).civix : undefined);
 

@@ -11,7 +11,7 @@ import { ArchivoPantalla } from './pantallas/Archivo';
 import { InsumosPantalla } from './pantallas/Insumos';
 import { copiarPartidas, eliminarInsumosSinUso, exportarMsProject, partidasATabla, partidasDesdeTabla, pegarPartidas, type Portapapeles } from '../nucleo/herramientas';
 import { nuevaPartidaDirecta } from '../nucleo/operaciones';
-import { guardarArchivo } from './persistencia';
+import { escribirPortapapeles, guardarArchivo, leerPortapapeles } from './persistencia';
 import { nativo } from './persistencia';
 import { duplicarPartida, eliminarPartida, moverPartida } from '../nucleo/operaciones';
 import { CajaHerramientas } from './pantallas/CajaHerramientas';
@@ -64,15 +64,14 @@ async function copiarSeleccion(cortar: boolean) {
   if (!x) return;
   portapapeles = copiarPartidas(proyecto, [s]);
   textoCopiado = partidasATabla(proyecto, [s]);
-  try { await navigator.clipboard.writeText(textoCopiado); escrituraOk = true; } catch { escrituraOk = false; /* sin acceso al portapapeles del sistema */ }
+  escrituraOk = await escribirPortapapeles(textoCopiado);
   if (cortar) { cambiar((p) => eliminarPartida(p, s), `Partida «${x.descripcion}» cortada: elija dónde pegarla (Ctrl+V)`); elegirPartida(-1); }
   else avisar(`Partida «${x.descripcion}» copiada (también puede pegarla en Excel)`);
 }
 async function pegarPartidasDelPortapapeles() {
   const { modulo, seleccion, proyecto } = obtener();
   const m = Math.min(Math.max(1, modulo), proyecto.modulos.length);
-  let texto = '';
-  try { texto = await navigator.clipboard.readText(); } catch { /* sin acceso */ }
+  const texto = await leerPortapapeles();
   const despues = proyecto.partidas[seleccion]?.modulo === m ? seleccion : undefined;
   const filas = partidasDesdeTabla(texto);
   // ¿El portapapeles tiene lo que se copió en Civix? Se compara por las descripciones (Windows puede cambiar saltos de

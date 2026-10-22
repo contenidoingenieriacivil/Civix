@@ -9,10 +9,12 @@ import { describe, expect, it } from 'vitest';
  * abrir con doble clic, recientes y exportar. Requiere el binario de Electron y una pantalla (xvfb-run en Linux).
  */
 const RAIZ = join(__dirname, '..', '..');
-const hayElectron = existsSync(join(RAIZ, 'node_modules', 'electron', 'dist')) && !!process.env.DISPLAY && existsSync(join(RAIZ, 'dist', 'index.html'));
+// En Windows no hace falta pantalla virtual; en Linux, xvfb-run. Con CIVIX_EXE se prueba el programa empaquetado (Civix.exe).
+const EXE = process.env.CIVIX_EXE;
+const hayElectron = (EXE ? existsSync(EXE) : existsSync(join(RAIZ, 'node_modules', 'electron', 'dist')) && existsSync(join(RAIZ, 'dist', 'index.html'))) && (process.platform === 'win32' || !!process.env.DISPLAY);
 
 async function abrir(env: Record<string, string>, args: string[] = []): Promise<{ app: ElectronApplication; w: Page }> {
-  const app = await _electron.launch({ args: [RAIZ, '--no-sandbox', ...args], cwd: RAIZ, env: { ...process.env, ...env } as Record<string, string> });
+  const app = await _electron.launch({ ...(EXE ? { executablePath: EXE, args } : { args: [RAIZ, '--no-sandbox', ...args] }), cwd: RAIZ, env: { ...process.env, ...env } as Record<string, string>, timeout: 60_000 });
   const w = await app.firstWindow();
   await w.getByTestId('titulo-proyecto').waitFor();
   await w.waitForTimeout(600); // recuperación del último trabajo
@@ -93,6 +95,32 @@ const total = async (w: Page) => (await w.getByTestId('total-general').innerText
     await w.getByTestId('archivo-abrir').click();
     await w.getByTestId('fila-partida').first().waitFor();
     expect(await w.getByTestId('fila-partida').count()).toBe(3);
+    await app.close();
+  });
+
+  it('copiar y pegar una partida con el portapapeles del sistema conserva su análisis; pega filas de Excel', async () => {
+    const { app, w } = await abrir({ ...base, CIVIX_DATOS: mkdtempSync(join(tmpdir(), 'civix-pp-')), CIVIX_CERRAR_RESPUESTA: '1' });
+    await nuevaPartida(w, 'Muro', '0');
+    await w.getByTestId('fila-partida').first().locator('td').first().click();
+    await w.getByTestId('cmd-ver-analisis').click();
+    await w.getByTestId('armar-analisis').click();
+    await w.getByTestId('buscar-insumo-apu').fill('Ladrillo');
+    await w.getByTestId('nuevo-insumo').click();
+    await w.getByTestId('nuevo-insumo-precio').fill('1,5');
+    await w.getByTestId('rendimiento-nuevo').fill('36');
+    await w.getByTestId('crear-insumo').click();
+    await w.getByTestId('cerrar-dialogo').click();
+    await w.getByTestId('fila-partida').first().locator('td').first().click();
+    await w.keyboard.press('Control+c');
+    await w.waitForTimeout(400);
+    const copiado = await app.evaluate(({ clipboard }) => clipboard.readText());
+    expect(copiado).toContain('Muro\t');
+    await w.keyboard.press('Control+v');
+    await expect.poll(() => w.getByTestId('fila-partida').count()).toBe(2);
+    expect(await w.getByTestId('ver-apu').count()).toBe(2); // las dos con su análisis
+    await app.evaluate(({ clipboard }) => clipboard.writeText('Excavación\tm3\t12,5\t45\r\nRelleno\tm3\t10\t30\r\n'));
+    await w.getByTestId('cmd-pegar').click();
+    await expect.poll(() => w.getByTestId('fila-partida').count()).toBe(4);
     await app.close();
   });
 });

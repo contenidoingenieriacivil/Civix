@@ -1,6 +1,6 @@
 // Contenedor de escritorio de Civix. La app es 100 % local: sirve los archivos de dist/ con un
 // protocolo propio (los módulos ES no cargan desde file://) y no abre ninguna conexión de red.
-const { app, BrowserWindow, Menu, protocol, net, shell, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, protocol, net, shell, dialog, ipcMain, clipboard } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -135,9 +135,7 @@ app.whenReady().then(() => {
     const datos = typeof o.contenido === 'string' ? o.contenido : Buffer.from(o.contenido);
     // copia de respaldo del archivo anterior (proyecto.civix.bak) y escritura segura
     if (/\.civix$/i.test(ruta) && fs.existsSync(ruta)) { try { fs.copyFileSync(ruta, ruta + '.bak'); } catch { /* sin respaldo */ } }
-    const tmp = ruta + '.tmp';
-    fs.writeFileSync(tmp, datos);
-    fs.renameSync(tmp, ruta);
+    try { escribirSeguro(ruta, datos); } catch (e) { return { ok: false, error: `No se pudo escribir ${ruta}: ${e.message}` }; }
     anotarReciente(ruta);
     return { ok: true, ruta };
   });
@@ -155,12 +153,13 @@ app.whenReady().then(() => {
   ipcMain.handle('civix:autoguardar', (_e, clave, texto) => {
     if (typeof texto !== 'string') return false;
     fs.mkdirSync(app.getPath('userData'), { recursive: true });
-    const r = rutaAuto(clave);
-    fs.writeFileSync(r + '.tmp', texto);
-    fs.renameSync(r + '.tmp', r);
+    escribirSeguro(rutaAuto(clave), texto);
     return true;
   });
   ipcMain.handle('civix:recuperar', (_e, clave) => { try { return fs.readFileSync(rutaAuto(clave), 'utf8'); } catch { return null; } });
+  // Portapapeles del sistema desde el proceso principal: funciona aunque la ventana no tenga el foco.
+  ipcMain.handle('civix:portapapeles-leer', () => clipboard.readText());
+  ipcMain.handle('civix:portapapeles-escribir', (_e, t) => { clipboard.writeText(String(t)); return true; });
   ipcMain.handle('civix:leer', (_e, ruta, binario) => leerArchivo(ruta, binario));
   ipcMain.handle('civix:recientes', () => leerRecientes().map((r) => ({ ruta: r, existe: fs.existsSync(r), fecha: fs.existsSync(r) ? fs.statSync(r).mtime.toISOString() : null })));
   ipcMain.handle('civix:quitar-reciente', (_e, ruta) => { try { fs.writeFileSync(rutaRecientes(), JSON.stringify(leerRecientes().filter((r) => r !== ruta))); } catch { /* nada */ } return true; });
@@ -196,4 +195,17 @@ function leerArchivo(ruta, binario) {
   const b = fs.readFileSync(ruta);
   if (/\.civix$/i.test(ruta)) anotarReciente(ruta);
   return binario || /\.ddp$/i.test(ruta) ? { ok: true, ruta, bytes: new Uint8Array(b) } : { ok: true, ruta, texto: b.toString('utf8') };
+}
+
+/** Escribe primero a un temporal y lo pone en su lugar; en Windows, si el archivo está bloqueado (OneDrive, antivirus), escribe directo. */
+function escribirSeguro(ruta, datos) {
+  fs.mkdirSync(path.dirname(ruta), { recursive: true });
+  const tmp = ruta + '.tmp';
+  try {
+    fs.writeFileSync(tmp, datos);
+    fs.renameSync(tmp, ruta);
+  } catch {
+    try { fs.rmSync(tmp, { force: true }); } catch { /* nada */ }
+    fs.writeFileSync(ruta, datos);
+  }
 }

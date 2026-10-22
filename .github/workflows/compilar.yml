@@ -37,6 +37,11 @@ jobs:
           npm run e2e
       - name: Instalador de Windows
         run: npm run dist
+      - name: Pruebas del programa empaquetado (guardar, recuperar, doble clic, portapapeles)
+        shell: pwsh
+        run: |
+          $env:CIVIX_EXE = "$PWD\release\win-unpacked\Civix.exe"
+          npx vitest run --config vitest.e2e.config.ts pruebas/e2e/escritorio.e2e.test.ts
       - name: Prueba de arranque del ejecutable empaquetado
         shell: pwsh
         run: |

@@ -1,3 +1,4 @@
+import { escribirPortapapeles } from '../persistencia';
 import { Accordion, AccordionHeader, AccordionItem, AccordionPanel, Button, Dropdown, Input, Option } from '@fluentui/react-components';
 import { useState, type ReactNode } from 'react';
 import { areaCirculo, areaRectangulo, areaTrapecio, areaTriangulo, convertir, dosificacion, impuestosIncluidos, ladrillosPorM2, manningLleno, pendiente, UNIDADES, volumenCilindro, volumenPrisma, volumenZanja } from '../../nucleo/calculos';
@@ -36,7 +37,7 @@ function Usar({ valor, descripcion }: { valor: number | null; descripcion: strin
           ls.push({ descripcion: descripcion.slice(0, 60), cantidad: v });
           x.computo = ls; x.cantidad = redondear(cantidadDeComputo(ls), 4);
         }, `Línea «${descripcion}» añadida al cómputo de «${partida!.descripcion}»`)}>Añadir al cómputo</Button>
-      <Button size="small" appearance="subtle" onClick={() => { void navigator.clipboard?.writeText(String(v).replace('.', ',')); avisar(`${num(v, 3)} copiado`); }}>Copiar</Button>
+      <Button size="small" appearance="subtle" onClick={() => { void escribirPortapapeles(String(v).replace('.', ',')); avisar(`${num(v, 3)} copiado`); }}>Copiar</Button>
     </div>
   );
 }

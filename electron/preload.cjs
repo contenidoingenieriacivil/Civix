@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('civix', {
   autoguardar: (clave, texto) => ipcRenderer.invoke('civix:autoguardar', clave, texto),
   recuperar: (clave) => ipcRenderer.invoke('civix:recuperar', clave),
   alVolcar: (f) => ipcRenderer.on('civix:volcar', async () => { try { await f(); } finally { ipcRenderer.send('civix:volcado'); } }),
+  leerPortapapeles: () => ipcRenderer.invoke('civix:portapapeles-leer'),
+  escribirPortapapeles: (t) => ipcRenderer.invoke('civix:portapapeles-escribir', t),
   imprimir: (html) => ipcRenderer.invoke('civix:imprimir', html),
   mostrarEnCarpeta: (ruta) => ipcRenderer.invoke('civix:mostrar', ruta),
   /** La ventana avisa si hay cambios sin guardar (para preguntar al cerrar). */

@@ -6,7 +6,7 @@ import { importarProyecto, INSTRUCCIONES_PROYECTO } from '../../ia/proyecto';
 import type { Proyecto } from '../../datos/modelo';
 import { num } from '../../reportes/formato';
 import { avisar, baseActual, cambiar, guardarBase, obtener, reemplazarProyecto } from '../almacen';
-import { elegirArchivos } from '../persistencia';
+import { elegirArchivos, escribirPortapapeles } from '../persistencia';
 import { puedeDescartar } from '../acciones';
 
 type Analisis =
@@ -48,7 +48,7 @@ export function ImportarIA({ alCerrar, textoInicial = '' }: { alCerrar: () => vo
   const [texto, setTexto] = useState(textoInicial);
   const [res, setRes] = useState<Analisis | null>(null);
   const [marcas, setMarcas] = useState<Record<number, boolean>>({});
-  const copiar = (t: string, msg: string) => { void navigator.clipboard?.writeText(t); avisar(msg); };
+  const copiar = (t: string, msg: string) => { void escribirPortapapeles(t); avisar(msg); };
 
   const analizar = (t: string = texto) => {
     const a = analizarJson(t);
