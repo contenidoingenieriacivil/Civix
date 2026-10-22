@@ -56,13 +56,15 @@ function moverSeleccion(dir: -1 | 1) {
 // --- Portapapeles de partidas (dentro de Civix) y texto para Excel ---------------------------------
 let portapapeles: Portapapeles | null = null;
 let textoCopiado = '';
+/** Si no se pudo escribir en el portapapeles del sistema, lo que haya ahí no es lo que se copió en Civix. */
+let escrituraOk = true;
 async function copiarSeleccion(cortar: boolean) {
   const { seleccion: s, proyecto } = obtener();
   const x = proyecto.partidas[s];
   if (!x) return;
   portapapeles = copiarPartidas(proyecto, [s]);
   textoCopiado = partidasATabla(proyecto, [s]);
-  try { await navigator.clipboard.writeText(textoCopiado); } catch { /* sin acceso al portapapeles del sistema */ }
+  try { await navigator.clipboard.writeText(textoCopiado); escrituraOk = true; } catch { escrituraOk = false; /* sin acceso al portapapeles del sistema */ }
   if (cortar) { cambiar((p) => eliminarPartida(p, s), `Partida «${x.descripcion}» cortada: elija dónde pegarla (Ctrl+V)`); elegirPartida(-1); }
   else avisar(`Partida «${x.descripcion}» copiada (también puede pegarla en Excel)`);
 }
@@ -75,7 +77,7 @@ async function pegarPartidasDelPortapapeles() {
   const filas = partidasDesdeTabla(texto);
   // ¿El portapapeles tiene lo que se copió en Civix? Se compara por las descripciones (Windows puede cambiar saltos de
   // línea u otros detalles del texto); así la partida se pega con su análisis y no como fila de Excel.
-  const propias = !!portapapeles && (!texto.trim() || texto === textoCopiado ||
+  const propias = !!portapapeles && (!escrituraOk || !texto.trim() || texto === textoCopiado ||
     (filas.length === portapapeles.partidas.length && filas.every((f, k) => f.descripcion === portapapeles!.partidas[k]!.descripcion.slice(0, 70))));
   if (portapapeles && propias) {
     const c = portapapeles;
