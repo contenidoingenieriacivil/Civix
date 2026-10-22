@@ -54,6 +54,7 @@ export function montoALiteral(monto: number, moneda = 'Bolivianos'): string {
   const centavos = Math.round(Math.abs(monto) * 100);
   const entero = Math.floor(centavos / 100);
   const cc = String(centavos % 100).padStart(2, '0');
+  if (!Number.isFinite(monto) || entero > 999_999_999_999) return 'Son: (monto demasiado grande para escribirlo en letras)';
   const letras = enteroALetras(entero);
   return `Son: ${letras.charAt(0).toUpperCase()}${letras.slice(1)} ${cc}/100 ${moneda}`;
 }

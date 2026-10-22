@@ -91,14 +91,14 @@ describe('interfaz de Civix', () => {
     await page.getByTestId('anadir-presupuesto').click();
     await pestana('inicio');
     const antes = await totalGeneral();
-    await page.getByTestId('fila-partida').first().dblclick();
+    await page.getByTestId('ver-apu').first().click();
     await page.getByTestId('tabla-apu').waitFor();
     const adoptado = await page.getByTestId('pu-adoptado').innerText();
     expect(adoptado).toMatch(/^\d/);
     const precioCemento = page.getByTestId('tabla-apu').locator('tr', { hasText: 'Cemento' }).locator('input').nth(1);
     await precioCemento.fill('100');
     await precioCemento.press('Enter');
-    await page.getByTestId('cerrar-apu').click();
+    await page.getByTestId('cerrar-dialogo').click();
     expect(await totalGeneral()).not.toBe(antes);
   });
 
@@ -383,7 +383,8 @@ describe('importar de IA: proyecto y actualización de precios', () => {
     expect(despues).not.toBe(antes);
     await pestana('base');
     await page.getByTestId('ver-insumos').click();
-    expect(await page.locator('tr', { hasText: 'Albañil' }).locator('input').inputValue()).toBe('12,500'); // sigue igual en la base
+    await page.getByTestId('buscar').fill('Albañil');
+    expect(await page.getByTestId('insumo-precio').first().inputValue()).toBe('12,500'); // sigue igual en la base
   });
 });
 
@@ -454,9 +455,9 @@ describe('cronograma', () => {
     expect(await page.getByTestId('titulo-proyecto').innerText()).toBe('VIVIENDA SANCHEZ');
     expect(await page.getByTestId('fila-partida').count()).toBe(32); // módulo OBRA GRUESA
     await page.getByTestId('modulo-1').click();
-    await page.getByTestId('fila-partida').first().dblclick();
+    await page.getByTestId('fila-partida').first().locator('td').first().dblclick();
     expect(await page.getByTestId('pu-adoptado').innerText()).toBe('100,87'); // Instalación de faenas
-    await page.getByTestId('cerrar-apu').click();
+    await page.getByTestId('cerrar-dialogo').click();
     await pestana('cronograma');
     await page.getByTestId('fila-actividad').first().waitFor();
     expect(await page.getByTestId('fila-actividad').first().locator('td').nth(5).innerText()).toBe('26/03/2007'); // inicio de la obra

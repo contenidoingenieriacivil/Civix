@@ -56,3 +56,24 @@ ul.ok { color: #14532d; padding-left: 18px; margin: 4px 0; } ul.errores { color:
 .version { opacity: .7; font-size: 11px; margin-left: -8px; align-self: flex-end; padding-bottom: 8px; }
 .bienvenida { border: 1px dashed var(--borde); border-radius: 8px; padding: 18px; margin: 8px 0; background: #f8fafc; }
 .bienvenida h3 { margin: 0 0 6px; } .bienvenida .acciones { margin-top: 12px; }
+.boton-icono { border: none; background: transparent; color: #9ca3af; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 3px; }
+.boton-icono:hover { color: #b91c1c; background: #fee2e2; }
+.celda-boton { border: 1px solid transparent; background: transparent; font: inherit; padding: 2px 6px; border-radius: 3px; cursor: pointer; color: var(--azul); text-align: right; width: 100%; }
+.celda-boton:hover { border-color: var(--borde); background: #fff; text-decoration: underline; }
+.celda-boton.alerta { color: #b45309; }
+.boton-simple { border: 1px solid var(--borde); background: #fff; border-radius: 4px; padding: 6px 12px; cursor: pointer; font: inherit; }
+.boton-simple:hover { background: var(--azul-claro); }
+.barra-modulo { border-bottom: 1px solid #eceef1; padding-bottom: 4px; }
+.nombre-modulo { font-size: 14px; color: var(--azul); }
+.pestanas-modulos { overflow-x: auto; max-width: 100%; }
+.anadir-insumo { margin-top: 6px; }
+ul.sugerencias, ul.lista-opciones { list-style: none; margin: 4px 0; padding: 0; border: 1px solid var(--borde); border-radius: 4px; max-height: 240px; overflow: auto; }
+ul.sugerencias li button, ul.lista-opciones li button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 5px 8px; font: inherit; cursor: pointer; }
+ul.sugerencias li button:hover, ul.lista-opciones li button:hover:not(:disabled) { background: var(--azul-claro); }
+ul.lista-opciones li button:disabled { color: #9ca3af; cursor: default; }
+ul.sugerencias li > span { padding: 5px 8px; }
+.inicio-modulo { font-weight: 400; color: #4b5563; } .inicio-modulo select { font: inherit; margin-left: 4px; max-width: 360px; }
+.celda-num { max-width: 100%; }
+@keyframes destello { from { background: #fde68a; } to { background: transparent; } }
+.aviso-flash { animation: destello 1.6s ease-out; border-radius: 3px; padding: 0 4px; }
+.campo .celda-num { border-color: var(--borde); text-align: left; padding: 6px 10px; border-radius: 4px; background: #fff; }

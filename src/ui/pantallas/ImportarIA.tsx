@@ -5,7 +5,7 @@ import { aplicarActualizacion, exportarInsumosParaIA, INSTRUCCIONES_PRECIOS, pla
 import { importarProyecto, INSTRUCCIONES_PROYECTO } from '../../ia/proyecto';
 import type { Proyecto } from '../../datos/modelo';
 import { num } from '../../reportes/formato';
-import { avisar, cambiar, guardarBase, obtener, reemplazarProyecto } from '../almacen';
+import { avisar, baseActual, cambiar, guardarBase, obtener, reemplazarProyecto } from '../almacen';
 import { elegirArchivos } from '../persistencia';
 
 type Analisis =
@@ -34,7 +34,7 @@ export function analizarJson(texto: string): Analisis {
   if (d && (d.insumos || d.items)) {
     if (!Array.isArray(d.insumos) && !Array.isArray(d.items)) return { tipo: 'error', mensajes: ['«insumos» e «items» deben ser listas.'] };
     if (!((d.insumos as unknown[] | undefined)?.length) && !((d.items as unknown[] | undefined)?.length)) return { tipo: 'error', mensajes: ['El paquete está vacío: no trae insumos ni ítems.'] };
-    const base = bases[0] ?? { nombre: 'Mi base de datos', moneda: 2, grupos: [], insumos: [], items: [] };
+    const base = baseActual() ?? { nombre: 'Mi base de datos', moneda: 2, grupos: [], insumos: [], items: [] };
     const { base: nueva, informe } = importarPaquete(d, base);
     if (informe.errores.length) return { tipo: 'error', mensajes: informe.errores };
     guardarBase(nueva);
