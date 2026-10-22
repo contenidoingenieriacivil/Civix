@@ -70,7 +70,7 @@ describe('robustez: ningún campo rompe la aplicación', () => {
     const [b, p] = datos();
     await importar(page, b);
     await importar(page, p);
-    const pantallas = ['inicio', 'base', 'cronograma', 'config', 'reportes'];
+    const pantallas = ['inicio', 'insumos', 'base', 'cronograma', 'config', 'reportes', 'archivo'];
     for (const t of pantallas) {
       await page.getByTestId(`pestana-${t}`).click();
       await sondear(page, errores, nombre.startsWith('tesis') ? 12 : 60);

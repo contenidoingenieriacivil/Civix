@@ -28,7 +28,7 @@ const PAQUETE = {
 
 const pestana = (id: string) => page.getByTestId(`pestana-${id}`).click();
 const cmd = (id: string) => page.getByTestId(`cmd-${id}`).click();
-const totalGeneral = async () => (await page.getByTestId('total-general').innerText()).replace(/\s+/g, ' ');
+const totalGeneral = async () => (await page.getByTestId('total-pie').innerText()).replace(/\s+/g, ' ');
 
 async function pegarPaquete(json: unknown) {
   await pestana('base');
@@ -364,6 +364,7 @@ describe('importar de IA: proyecto y actualización de precios', () => {
     await page.getByTestId('anadir-presupuesto').click();
     await pestana('inicio');
     const antes = await totalGeneral();
+    await pestana('insumos');
     await cmd('actualizar-precios');
     await page.getByTestId('copiar-insumos').click();
     const exportada = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as { tipo: string; insumos: { descripcion: string; unidad: string; rubro: string; precioActual: number }[] };

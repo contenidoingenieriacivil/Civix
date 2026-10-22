@@ -1,7 +1,7 @@
 import { Button, Dropdown, Input, Option } from '@fluentui/react-components';
 import { useState } from 'react';
 import { PLANTILLAS_PREDEFINIDAS } from '../../nucleo/plantillas';
-import { crearProyecto } from '../acciones';
+import { nuevoProyectoConfirmado } from '../acciones';
 
 export function NuevoProyecto({ alCerrar }: { alCerrar: () => void }) {
   const [nombre, setNombre] = useState('');
@@ -10,11 +10,11 @@ export function NuevoProyecto({ alCerrar }: { alCerrar: () => void }) {
   const [moneda, setMoneda] = useState(2);
   const [plantilla, setPlantilla] = useState('Normas básicas del SABS');
   const crear = () => {
-    crearProyecto({ nombre, lugar, cliente, moneda, plantilla: PLANTILLAS_PREDEFINIDAS.find((x) => x.nombre === plantilla) });
+    void nuevoProyectoConfirmado({ nombre, lugar, cliente, moneda, plantilla: PLANTILLAS_PREDEFINIDAS.find((x) => x.nombre === plantilla) });
     alCerrar();
   };
   return (
-    <div className="modal-fondo"><div className="modal" role="dialog" aria-label="Nuevo proyecto" style={{ width: 'min(560px, 94vw)' }}>
+    <div className="modal-fondo" onKeyDown={(e) => { if (e.key === 'Escape') alCerrar(); }}><div className="modal" role="dialog" aria-label="Nuevo proyecto" style={{ width: 'min(560px, 94vw)' }}>
       <h3>Nuevo proyecto</h3>
       <div className="rejilla-campos" style={{ gridTemplateColumns: '1fr' }}>
         <label className="campo">Nombre del proyecto<Input value={nombre} onChange={(_, d) => setNombre(d.value)} data-testid="nuevo-nombre" autoFocus onKeyDown={(e) => e.key === 'Enter' && crear()} /></label>

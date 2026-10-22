@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, Dropdown, Input, Option, Textarea } from '@fluentui/react-components';
+import { Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, Dropdown, Input, Option, Textarea } from '@fluentui/react-components';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { LineaComputo } from '../../datos/modelo';
 import { calcularItem, redondear } from '../../nucleo/calculo';
@@ -6,7 +6,8 @@ import { agregarLineaApu, moverAModulo, cantidadDeComputo, cantidadLinea, nuevaP
 import { calcularProyecto } from '../../nucleo/presupuesto';
 import type { Linea, Rubro } from '../../nucleo/tipos';
 import { num } from '../../reportes/formato';
-import { abrirDialogo, avisar, cambiar, elegirPartida, guardarBase, irAPartida, useEstado } from '../almacen';
+import { abrirDialogo, avisar, cambiar, elegirPartida, guardarBase, irAModulo, irAPartida, useEstado } from '../almacen';
+import { igualarPrecioUnitario, kgPorMetro, pesoFierro, piesTablares, reemplazarInsumo, reemplazarItemDePartida, sincronizarPreciosConBase, unirModulos } from '../../nucleo/herramientas';
 import { leerNumero, Numero, Texto } from '../campos';
 
 const RUBROS: [Rubro, string, 'materiales' | 'manoObra' | 'equipo'][] = [['M', 'Materiales', 'materiales'], ['O', 'Mano de obra', 'manoObra'], ['E', 'Equipo y maquinaria', 'equipo']];
@@ -25,6 +26,22 @@ function Marco({ titulo, ancho = 860, children, acciones, id }: { titulo: ReactN
   );
 }
 
+/** Pregunta con botones (Guardar / No guardar / Cancelar…). */
+export function Pregunta() {
+  const q = useEstado((e) => e.pregunta);
+  if (!q) return null;
+  const ultimo = q.botones.length - 1;
+  return (
+    <Dialog open onOpenChange={(_, d) => { if (!d.open) q.responder(ultimo); }}>
+      <DialogSurface style={{ maxWidth: 520 }} data-testid="pregunta"><DialogBody>
+        <DialogTitle>Civix</DialogTitle>
+        <DialogContent><p>{q.texto}</p></DialogContent>
+        <DialogActions>{q.botones.map((b, k) => <Button key={b} appearance={k === 0 ? 'primary' : 'secondary'} onClick={() => q.responder(k)} data-testid={`respuesta-${k}`}>{b}</Button>)}</DialogActions>
+      </DialogBody></DialogSurface>
+    </Dialog>
+  );
+}
+
 /** Abre el cuadro que corresponda al estado. */
 export function Dialogos() {
   const d = useEstado((e) => e.dialogo);
@@ -37,6 +54,11 @@ export function Dialogos() {
     case 'especificacion': return <DialogoEspecificacion pos={d.pos} />;
     case 'guardar-en-base': return <DialogoGuardarEnBase pos={d.pos} />;
     case 'mover-modulo': return <DialogoMoverModulo pos={d.pos} />;
+    case 'cambiar-item': return <DialogoCambiarItem pos={d.pos} />;
+    case 'calculadora': return <DialogoCalculadora />;
+    case 'sincronizar': return <DialogoSincronizar />;
+    case 'unir-modulo': return <DialogoUnirModulo />;
+    case 'reemplazar-insumo': return <DialogoReemplazarInsumo id={d.id} />;
     case 'nueva-partida': return <DialogoNuevaPartida />;
     case 'buscar': return <DialogoBuscar />;
   }
@@ -90,6 +112,7 @@ function DialogoApu({ pos }: { pos: number }) {
             ))}
           </tbody>
         </table>
+        <Igualar pos={pos} />
         <div className="barra-filtros"><Button size="small" onClick={() => cambiar((p) => { p.partidas[pos]!.item.precioFijo = apu.precioUnitario; }, 'La partida pasa a precio directo')} data-testid="pasar-a-directo">Usar precio directo en vez del análisis</Button></div>
       </>)}
       <p className="literal">Precio unitario adoptado: <b data-testid="pu-adoptado">{num(apu.precioUnitario)}</b></p>
@@ -268,6 +291,122 @@ function DialogoMoverModulo({ pos }: { pos: number }) {
     <Marco id="dialogo-mover" ancho={560} titulo={`Pasar «${x.descripcion}» a otro módulo`}>
       <ul className="lista-opciones">
         {proyecto.modulos.map((m, k) => <li key={k}><button disabled={k + 1 === x.modulo} onClick={() => mover(k + 1)} data-testid="destino-modulo">{k + 1}. {m.nombre}{k + 1 === x.modulo ? ' (actual)' : ''}</button></li>)}
+      </ul>
+    </Marco>
+  );
+}
+
+/** Igualar precio unitario (cálculo inverso): ajusta los rendimientos para llegar al precio pedido. */
+function Igualar({ pos }: { pos: number }) {
+  const proyecto = useEstado((e) => e.proyecto);
+  const [objetivo, setObjetivo] = useState('');
+  const [solo, setSolo] = useState(false);
+  const aplicar = () => {
+    const o = leerNumero(objetivo);
+    if (o === null || o <= 0) { avisar('Escriba el precio unitario que desea obtener'); return; }
+    try {
+      const { item, factor } = igualarPrecioUnitario(proyecto.partidas[pos]!.item, new Map(proyecto.insumos.map((i) => [i.id, i])), proyecto.plantilla, o, solo);
+      cambiar((p) => { p.partidas[pos]!.item = { ...item, id: p.partidas[pos]!.item.id }; }, `Rendimientos ${solo ? 'de mano de obra y equipo ' : ''}multiplicados por ${num(factor, 4)} para llegar a ${num(o)}`);
+    } catch (e) { avisar(e instanceof Error ? e.message : String(e)); }
+  };
+  return (
+    <div className="barra-filtros" style={{ marginTop: 6 }}>
+      <b>Igualar precio unitario a</b>
+      <Input value={objetivo} onChange={(_, d) => setObjetivo(d.value)} style={{ width: 100 }} data-testid="igualar-objetivo" onKeyDown={(e) => e.key === 'Enter' && aplicar()} />
+      <Checkbox label="solo mano de obra y equipo" checked={solo} onChange={(_, d) => setSolo(!!d.checked)} data-testid="igualar-solo-mo" />
+      <Button size="small" onClick={aplicar} data-testid="igualar-aplicar">Igualar</Button>
+    </div>
+  );
+}
+
+/** Reemplaza el ítem (análisis) de la partida por otro de una base, conservando cantidad y cómputo. */
+function DialogoCambiarItem({ pos }: { pos: number }) {
+  const bases = useEstado((e) => e.bases);
+  const partida = useEstado((e) => e.proyecto.partidas[pos]!);
+  const [q, setQ] = useState(partida.descripcion.split(/\s+/).slice(0, 2).join(' '));
+  const t = sinAcentos(q);
+  const res = t.length < 2 ? [] : bases.flatMap((b) => b.items.filter((i) => sinAcentos(i.descripcion).includes(t) || sinAcentos(i.codigo ?? '') === t).map((i) => ({ b, i }))).slice(0, 60);
+  return (
+    <Marco id="dialogo-cambiar-item" ancho={820} titulo={`Cambiar el ítem de «${partida.descripcion}»`}>
+      {!bases.length ? <p>No hay bases de datos cargadas. Impórtelas en la pestaña «Base de datos».</p> : (<>
+        <Input value={q} onChange={(_, d) => setQ(d.value)} placeholder="Buscar ítem en las bases…" style={{ width: '100%' }} autoFocus data-testid="buscar-item-cambio" />
+        <ul className="lista-opciones" style={{ maxHeight: '45vh' }}>
+          {res.map(({ b, i }) => <li key={`${b.nombre}-${i.id}`}><button data-testid="opcion-item" onClick={() => {
+            cambiar((p) => reemplazarItemDePartida(p, pos, b, i.id), `Análisis cambiado por «${i.descripcion}» (se conserva la cantidad ${num(partida.cantidad)})`);
+            abrirDialogo(null);
+          }}>{i.codigo ? `${i.codigo} · ` : ''}{i.descripcion} <small>({i.unidad} · {b.nombre})</small></button></li>)}
+          {t.length >= 2 && !res.length && <li className="vacio">Sin resultados</li>}
+        </ul>
+        <p className="nota-ui">Se conserva la cantidad, el cómputo y el plazo; cambian la descripción, la unidad y el análisis de precio unitario.</p>
+      </>)}
+    </Marco>
+  );
+}
+
+function DialogoCalculadora() {
+  const [f, setF] = useState({ d: '12', l: '12', n: '1' });
+  const [m, setM] = useState({ e: '2', a: '4', l: '3', n: '1' });
+  const v = (s: string) => { const x = leerNumero(s); return x !== null && x >= 0 ? x : null; };
+  const kg = v(f.d) !== null && v(f.l) !== null && v(f.n) !== null ? pesoFierro(v(f.d)!, v(f.l)!, v(f.n)!) : null;
+  const pies = [m.e, m.a, m.l, m.n].every((x) => v(x) !== null) ? piesTablares(v(m.e)!, v(m.a)!, v(m.l)!, v(m.n)!) : null;
+  const campo = (t: string, val: string, set: (s: string) => void, id: string) => <label className="campo">{t}<Input value={val} onChange={(_, d) => set(d.value)} style={{ width: 110 }} data-testid={id} /></label>;
+  return (
+    <Marco id="dialogo-calculadora" ancho={700} titulo="Calculadoras">
+      <h4>Peso del fierro (acero de refuerzo)</h4>
+      <div className="barra-filtros">{campo('Diámetro (mm)', f.d, (s) => setF({ ...f, d: s }), 'calc-diametro')}{campo('Largo de cada barra (m)', f.l, (s) => setF({ ...f, l: s }), 'calc-largo')}{campo('N° de barras', f.n, (s) => setF({ ...f, n: s }), 'calc-barras')}
+        <span className="literal">= <b data-testid="calc-kg">{kg !== null ? `${num(kg, 2)} kg` : '—'}</b>{v(f.d) !== null ? ` (${num(kgPorMetro(v(f.d)!), 3)} kg/m)` : ''}</span></div>
+      <table className="grilla compacta" style={{ maxWidth: 520 }}><thead><tr><th>Ø mm</th>{[6, 8, 10, 12, 16, 20, 25, 32].map((d) => <th key={d} className="n">{d}</th>)}</tr></thead><tbody><tr><td>kg/m</td>{[6, 8, 10, 12, 16, 20, 25, 32].map((d) => <td key={d} className="n">{num(kgPorMetro(d), 3)}</td>)}</tr></tbody></table>
+      <h4>Madera (pies tablares, pie²)</h4>
+      <div className="barra-filtros">{campo('Espesor (pulg)', m.e, (s) => setM({ ...m, e: s }), 'calc-espesor')}{campo('Ancho (pulg)', m.a, (s) => setM({ ...m, a: s }), 'calc-ancho')}{campo('Largo (m)', m.l, (s) => setM({ ...m, l: s }), 'calc-largo-madera')}{campo('Piezas', m.n, (s) => setM({ ...m, n: s }), 'calc-piezas')}
+        <span className="literal">= <b data-testid="calc-pies">{pies !== null ? `${num(pies, 2)} pie²` : '—'}</b></span></div>
+      <p className="nota-ui">Fierro: kg/m = d² ÷ 162. Madera: espesor × ancho × largo (pies) ÷ 12.</p>
+    </Marco>
+  );
+}
+
+function DialogoSincronizar() {
+  const bases = useEstado((e) => e.bases);
+  const proyecto = useEstado((e) => e.proyecto);
+  const [nombre, setNombre] = useState(bases[0]?.nombre ?? '');
+  const base = bases.find((b) => b.nombre === nombre);
+  const vista = useMemo(() => (base ? sincronizarPreciosConBase(structuredClone(proyecto), base) : null), [base, proyecto]);
+  return (
+    <Marco id="dialogo-sincronizar" ancho={620} titulo="Tomar precios de una base de datos" acciones={
+      <Button appearance="primary" disabled={!base || !vista?.actualizados} data-testid="aplicar-sincronizar" onClick={() => { cambiar((p) => { sincronizarPreciosConBase(p, base!); }, `${vista!.actualizados} precio(s) del proyecto tomados de «${base!.nombre}»`); abrirDialogo(null); }}>Actualizar {vista?.actualizados ?? 0} precio(s)</Button>}>
+      {!bases.length ? <p>No hay bases de datos cargadas.</p> : (<>
+        <Dropdown value={nombre} selectedOptions={[nombre]} onOptionSelect={(_, d) => setNombre(d.optionValue ?? '')} style={{ minWidth: 300 }}>{bases.map((b) => <Option key={b.nombre} value={b.nombre}>{b.nombre}</Option>)}</Dropdown>
+        {vista && <p data-testid="vista-sincronizar"><b>{vista.actualizados}</b> insumos del proyecto cambiarían de precio · {proyecto.insumos.length - vista.actualizados - vista.sinCoincidencia.length} ya tienen el mismo · {vista.sinCoincidencia.length} no están en la base (se conservan).</p>}
+        <p className="nota-ui">Se comparan por nombre (sin importar mayúsculas ni acentos) y rubro.</p>
+      </>)}
+    </Marco>
+  );
+}
+
+function DialogoUnirModulo() {
+  const proyecto = useEstado((e) => e.proyecto);
+  const modulo = useEstado((e) => e.modulo);
+  const actual = proyecto.modulos[modulo - 1];
+  return (
+    <Marco id="dialogo-unir" ancho={560} titulo={`Unir «${actual?.nombre ?? ''}» con otro módulo`}>
+      <p>Las partidas de este módulo pasan al final del módulo que elija, y este módulo se elimina.</p>
+      <ul className="lista-opciones">{proyecto.modulos.map((m, k) => <li key={k}><button disabled={k + 1 === modulo} data-testid="destino-unir" onClick={() => { const destino = k + 1 > modulo ? k : k + 1; cambiar((p) => unirModulos(p, modulo, k + 1), `Módulo «${actual?.nombre}» unido a «${m.nombre}»`); irAModulo(destino); abrirDialogo(null); }}>{k + 1}. {m.nombre}</button></li>)}</ul>
+    </Marco>
+  );
+}
+
+function DialogoReemplazarInsumo({ id }: { id: number }) {
+  const proyecto = useEstado((e) => e.proyecto);
+  const i = proyecto.insumos.find((x) => x.id === id);
+  const [q, setQ] = useState('');
+  if (!i) return null;
+  const t = sinAcentos(q);
+  const opciones = proyecto.insumos.filter((x) => x.id !== id && x.rubro === i.rubro && (!t || sinAcentos(x.descripcion).includes(t)));
+  return (
+    <Marco id="dialogo-reemplazar-insumo" ancho={640} titulo={`Reemplazar «${i.descripcion}» en todo el proyecto`}>
+      <Input value={q} onChange={(_, d) => setQ(d.value)} placeholder="Buscar el insumo que lo reemplaza…" style={{ width: '100%' }} autoFocus data-testid="buscar-reemplazo" />
+      <ul className="lista-opciones" style={{ maxHeight: '45vh' }}>
+        {opciones.map((x) => <li key={x.id}><button data-testid="opcion-insumo" onClick={() => { let n = 0; cambiar((p) => { n = reemplazarInsumo(p, id, x.id); }, ''); avisar(`«${i.descripcion}» reemplazado por «${x.descripcion}» en ${n} partida(s)`); abrirDialogo(null); }}>{x.descripcion} <small>({x.unidad} · {num(x.precio, 3)})</small></button></li>)}
+        {!opciones.length && <li className="vacio">No hay otro insumo del mismo rubro. Créelo abajo en la pestaña Insumos.</li>}
       </ul>
     </Marco>
   );

@@ -61,8 +61,8 @@ function Formula({ valor, alCambiar, probar }: { valor: string; alCambiar: (f: s
 
 export function ConfiguracionPantalla() {
   const p = useEstado((e) => e.proyecto);
-  const campo = (etq: string, k: 'nombre' | 'lugar' | 'cliente' | 'responsable', id: string) => (
-    <label className="campo">{etq}<Input value={p[k]} maxLength={k === 'nombre' ? 120 : 80} data-testid={id} onChange={(_, d) => cambiar((x) => { x[k] = d.value; }, '', `cfg-${k}`)}
+  const campo = (etq: string, k: 'nombre' | 'lugar' | 'cliente' | 'responsable' | 'revisado' | 'aprobado' | 'empresa', id: string) => (
+    <label className="campo">{etq}<Input value={p[k] ?? ''} maxLength={k === 'nombre' ? 120 : 80} data-testid={id} onChange={(_, d) => cambiar((x) => { x[k] = d.value; }, '', `cfg-${k}`)}
       onBlur={() => { if (k === 'nombre' && !p.nombre.trim()) cambiar((x) => { x.nombre = 'Proyecto sin nombre'; }); }} /></label>
   );
   const cambiarMonedaA = (m: number) => {
@@ -75,7 +75,7 @@ export function ConfiguracionPantalla() {
     <div className="pantalla config">
       <section><h3>Datos generales del proyecto</h3>
         <div className="rejilla-campos">
-          {campo('Proyecto', 'nombre', 'cfg-nombre')}{campo('Lugar', 'lugar', 'cfg-lugar')}{campo('Cliente', 'cliente', 'cfg-cliente')}{campo('Elaborado por', 'responsable', 'cfg-responsable')}
+          {campo('Proyecto', 'nombre', 'cfg-nombre')}{campo('Lugar', 'lugar', 'cfg-lugar')}{campo('Cliente', 'cliente', 'cfg-cliente')}{campo('Elaborado por', 'responsable', 'cfg-responsable')}{campo('Revisado por', 'revisado', 'cfg-revisado')}{campo('Aprobado por', 'aprobado', 'cfg-aprobado')}{campo('Empresa (membrete de los reportes)', 'empresa', 'cfg-empresa')}
           <label className="campo">Fecha (inicio de obra)<Input type="date" value={p.fecha ?? ''} data-testid="cfg-fecha" onChange={(_, d) => { if (/^\d{4}-\d{2}-\d{2}$/.test(d.value)) cambiar((x) => { x.fecha = d.value; }, 'Fecha cambiada', 'cfg-fecha'); }} /></label>
           <label className="campo">Moneda<Dropdown value={p.moneda === 1 ? 'Dólares americanos' : 'Bolivianos'} selectedOptions={[String(p.moneda)]} data-testid="cfg-moneda" onOptionSelect={(_, d) => cambiarMonedaA(Number(d.optionValue))}><Option value="2">Bolivianos</Option><Option value="1">Dólares americanos</Option></Dropdown></label>
           <label className="campo">Tipo de cambio (Bs por $US)<Numero id="cfg-cambio" valor={p.cambioDolar} decimales={2} min={0.01} max={1000} ancho={120} alCambiar={(n) => cambiar((x) => { x.cambioDolar = n; }, 'Tipo de cambio actualizado')} /></label>

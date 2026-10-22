@@ -7,6 +7,7 @@ import type { Proyecto } from '../../datos/modelo';
 import { num } from '../../reportes/formato';
 import { avisar, baseActual, cambiar, guardarBase, obtener, reemplazarProyecto } from '../almacen';
 import { elegirArchivos } from '../persistencia';
+import { puedeDescartar } from '../acciones';
 
 type Analisis =
   | { tipo: 'error'; mensajes: string[] }
@@ -72,7 +73,7 @@ export function ImportarIA({ alCerrar, textoInicial = '' }: { alCerrar: () => vo
   };
 
   return (
-    <div className="modal-fondo"><div className="modal" role="dialog" aria-label="Importar de IA" style={{ width: 'min(900px, 96vw)' }}>
+    <div className="modal-fondo" onKeyDown={(e) => { if (e.key === 'Escape') alCerrar(); }}><div className="modal" role="dialog" aria-label="Importar de IA" style={{ width: 'min(900px, 96vw)' }}>
       <h3>Importar lo que preparó una IA</h3>
       <p className="nota-ui">Pegue el JSON. Civix detecta si son <b>datos</b> (insumos/ítems), un <b>proyecto</b> o una lista de <b>precios</b>, lo valida completo y le muestra qué cambiaría antes de guardar.</p>
       <div className="acciones">
@@ -84,7 +85,7 @@ export function ImportarIA({ alCerrar, textoInicial = '' }: { alCerrar: () => vo
       </div>
       <Textarea value={texto} onChange={(_, d) => setTexto(d.value)} rows={9} style={{ width: '100%', fontFamily: 'Consolas, monospace' }} data-testid="json-ia" />
       {res && res.tipo !== 'precios' && <ul className={res.tipo === 'error' ? 'errores' : 'ok'} data-testid="resultado-importacion">{res.mensajes.slice(0, 14).map((m, k) => <li key={k}>{m}</li>)}</ul>}
-      {res?.tipo === 'proyecto' && <div className="acciones"><Button appearance="primary" data-testid="abrir-proyecto-ia" onClick={() => { reemplazarProyecto(res.proyecto, `Proyecto «${res.proyecto.nombre}» importado`); alCerrar(); }}>Abrir como proyecto nuevo (reemplaza el actual)</Button></div>}
+      {res?.tipo === 'proyecto' && <div className="acciones"><Button appearance="primary" data-testid="abrir-proyecto-ia" onClick={async () => { if (!(await puedeDescartar())) return; reemplazarProyecto(res.proyecto, `Proyecto «${res.proyecto.nombre}» importado: guárdelo con Ctrl+S`, { ruta: null }); alCerrar(); }}>Abrir como proyecto nuevo (reemplaza el actual)</Button></div>}
       {res?.tipo === 'precios' && (() => {
         const inf = res.informe, activos = Object.values(marcas).filter(Boolean).length;
         return (

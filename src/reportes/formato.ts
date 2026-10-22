@@ -35,6 +35,11 @@ tr.tot td { font-weight: bold; background: #dcdcdc; }
 .aviso { border: 0.4mm solid #b45309; background: #fffbeb; padding: 2.5mm 3mm; margin: 3mm 0; font-size: 8.5pt; }
 .aviso b { color: #92400e; }
 .pagina { page-break-after: always; }
+.membrete { text-align: center; font-weight: bold; font-size: 10pt; margin: 0 0 2mm; border-bottom: 0.4mm solid #333; padding-bottom: 1mm; }
+.firmas { display: flex; justify-content: space-around; margin-top: 18mm; font-size: 8pt; text-align: center; }
+.firmas .linea { border-top: 0.3mm solid #000; min-width: 50mm; padding-top: 1mm; font-weight: bold; }
+.grafico { width: 100%; height: auto; margin: 3mm 0; }
+.salto { page-break-before: always; }
 @media screen { html { background: #d1d5db; } body { background: #fff; max-width: 205mm; margin: 10px auto; padding: 12mm; box-shadow: 0 1px 6px rgba(0,0,0,.25); } .pagina { border-bottom: 1px dashed #bbb; margin-bottom: 8mm; padding-bottom: 6mm; } }
 .pagina:last-child { page-break-after: auto; }
 `;

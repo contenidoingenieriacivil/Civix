@@ -73,6 +73,20 @@
       "shortcutName": "Civix",
       "createDesktopShortcut": true,
       "artifactName": "Civix-Instalador-${version}.${ext}"
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": "civix",
+        "name": "Proyecto Civix",
+        "description": "Proyecto de presupuesto de Civix",
+        "role": "Editor"
+      },
+      {
+        "ext": "civbd",
+        "name": "Base de datos Civix",
+        "description": "Base de datos de precios de Civix",
+        "role": "Editor"
+      }
+    ]
   }
 }

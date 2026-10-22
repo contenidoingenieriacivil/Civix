@@ -1,8 +1,9 @@
 import { Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, Input, Tab, TabList, Tooltip } from '@fluentui/react-components';
-import { Add16Regular, ArrowLeft16Regular, ArrowRight16Regular, Delete16Regular, Edit16Regular, Search16Regular } from '@fluentui/react-icons';
+import { Copy16Regular, Merge16Regular, Add16Regular, ArrowLeft16Regular, ArrowRight16Regular, Delete16Regular, Edit16Regular, Search16Regular } from '@fluentui/react-icons';
 import { useMemo, useState } from 'react';
 import { montoALiteral } from '../../nucleo/literal';
 import { agregarModulo, eliminarModulo, moverModulo } from '../../nucleo/operaciones';
+import { duplicarModulo } from '../../nucleo/herramientas';
 import { calcularProyecto } from '../../nucleo/presupuesto';
 import { num } from '../../reportes/formato';
 import { abrirDialogo, cambiar, elegirPartida, irAModulo, irAPestana, solicitarImportacion, useEstado } from '../almacen';
@@ -40,6 +41,8 @@ export function Presupuesto() {
           onClick={() => { cambiar((p) => { agregarModulo(p, `MÓDULO ${p.modulos.length + 1}`); }, 'Módulo añadido'); ir(calc.modulos.length + 1); }}>Módulo</Button>
         <Tooltip content="Mover el módulo a la izquierda" relationship="label"><Button size="small" appearance="subtle" icon={<ArrowLeft16Regular />} disabled={actual.indice === 1} data-testid="modulo-izquierda" onClick={() => { cambiar((p) => { moverModulo(p, actual.indice, -1); }, 'Módulo movido'); ir(actual.indice - 1); }} /></Tooltip>
         <Tooltip content="Mover el módulo a la derecha" relationship="label"><Button size="small" appearance="subtle" icon={<ArrowRight16Regular />} disabled={actual.indice === calc.modulos.length} data-testid="modulo-derecha" onClick={() => { cambiar((p) => { moverModulo(p, actual.indice, 1); }, 'Módulo movido'); ir(actual.indice + 1); }} /></Tooltip>
+        <Button size="small" appearance="subtle" icon={<Copy16Regular />} data-testid="duplicar-modulo" onClick={() => { let n = actual.indice; cambiar((p) => { n = duplicarModulo(p, actual.indice); }, `Módulo «${actual.nombre}» duplicado`); ir(n); }}>Duplicar</Button>
+        <Button size="small" appearance="subtle" icon={<Merge16Regular />} disabled={calc.modulos.length < 2} data-testid="unir-modulo" onClick={() => abrirDialogo({ tipo: 'unir-modulo' })}>Unir con…</Button>
         <Button size="small" appearance="subtle" icon={<Delete16Regular />} disabled={calc.modulos.length === 1 && !actual.partidas.length} data-testid="eliminar-modulo" onClick={borrarModulo}>Eliminar módulo</Button>
         <span style={{ flex: 1 }} />
         <Button size="small" icon={<Add16Regular />} onClick={() => abrirDialogo({ tipo: 'nueva-partida' })} data-testid="boton-nueva-partida">Nueva partida</Button>

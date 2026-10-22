@@ -77,3 +77,13 @@ ul.sugerencias li > span { padding: 5px 8px; }
 @keyframes destello { from { background: #fde68a; } to { background: transparent; } }
 .aviso-flash { animation: destello 1.6s ease-out; border-radius: 3px; padding: 0 4px; }
 .campo .celda-num { border-color: var(--borde); text-align: left; padding: 6px 10px; border-radius: 4px; background: #fff; }
+
+.archivo-titulo { margin-left: auto; opacity: .85; font-size: 12px; }
+.archivo-vista { gap: 12px; }
+.tarjeta { border: 1px solid var(--borde); border-radius: 8px; padding: 12px 16px; background: #fff; }
+.tarjeta h3 { margin: 0 0 6px; }
+.estado-pendiente { color: #b45309; font-weight: 600; } .estado-ok { color: #15803d; font-weight: 600; }
+.celda-boton.izq { text-align: left; }
+tr.inexistente td { color: #9ca3af; }
+.ribbon-cuerpo { overflow-x: auto; } .ribbon-boton.fui-Button { min-width: 58px; }
+.rejilla-lote { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px 12px; margin: 6px 0; }

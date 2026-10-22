@@ -13,12 +13,17 @@ const NOTA_B4 = 'Nota.- El TOTAL refleja el costo total por hora de cada equipo 
 
 const MONEDA = (p: Proyecto) => (p.moneda === 1 ? 'Dólares americanos' : 'Bolivianos');
 
-function cabecera(p: Proyecto): string {
-  return `<table class="meta"><tr><td><b>Proyecto:</b> ${esc(p.nombre)}</td><td><b>Fecha:</b> ${fechaBo(p.fecha)}</td></tr>
+export function cabecera(p: Proyecto): string {
+  return `${p.empresa ? `<p class="membrete">${esc(p.empresa)}</p>` : ''}<table class="meta"><tr><td><b>Proyecto:</b> ${esc(p.nombre)}</td><td><b>Fecha:</b> ${fechaBo(p.fecha)}</td></tr>
 <tr><td><b>Cliente:</b> ${esc(p.cliente)}</td><td><b>Lugar:</b> ${esc(p.lugar)}</td></tr></table>`;
 }
 
 const firma = (t: string) => `<div class="firma"><div>${t}</div></div>`;
+/** Firmas de los responsables del proyecto (elaborado, revisado y aprobado por), si se llenaron en Configuración. */
+export function firmasProyecto(p: Proyecto): string {
+  const f = [['Elaborado por', p.responsable], ['Revisado por', p.revisado], ['Aprobado por', p.aprobado]].filter(([, n]) => n && n.trim());
+  return f.length ? `<div class="firmas">${f.map(([c, n]) => `<div><div class="linea">${esc(n!)}</div>${c}</div>`).join('')}</div>` : '';
+}
 
 /** Formulario B-1: presupuesto por ítems y general de la obra. */
 export function formularioB1(c: ProyectoCalculado): string {
@@ -127,7 +132,7 @@ export function reporteResumen(c: ProyectoCalculado): string {
 <h2><b>Por módulos</b></h2><table class="t"><thead><tr><th>Módulo</th><th>Total</th><th>%</th></tr></thead><tbody>${modulos}<tr class="tot"><td>TOTAL PRESUPUESTO</td><td class="n">${num(c.total, d)}</td><td class="n">100,00 %</td></tr></tbody></table><br>
 <h2><b>Por rubros (costo directo de insumos)</b></h2><table class="t"><thead><tr><th>Rubro</th><th>Monto</th><th>%</th></tr></thead><tbody>${rubros.map((r) => `<tr><td>${r.nombre}</td><td class="n">${num(r.monto, d)}</td><td class="n">${num(r.porcentaje, 2)} %</td></tr>`).join('')}</tbody></table><br>
 <h2><b>Por grupos</b></h2><table class="t"><thead><tr><th>Grupo</th><th>Monto</th></tr></thead><tbody>${grupos.map((g) => `<tr><td>${esc(g.grupo)}</td><td class="n">${num(g.monto, d)}</td></tr>`).join('')}</tbody></table>
-<p><b>${esc(montoALiteral(c.total, MONEDA(p)))}</b></p>`);
+<p><b>${esc(montoALiteral(c.total, MONEDA(p)))}</b></p>${firmasProyecto(p)}`);
 }
 
 /** Desglose general de insumos con cantidades requeridas y montos. */

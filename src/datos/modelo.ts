@@ -72,6 +72,10 @@ export interface Proyecto {
   cambioDolar: number;
   memo: string;
   responsable: string;
+  /** Revisado por / aprobado por (firmas de los reportes) y nombre de la empresa (membrete). */
+  revisado?: string;
+  aprobado?: string;
+  empresa?: string;
   plantilla: Plantilla;
   grupos: Grupo[];
   modulos: Modulo[];
