@@ -79,7 +79,7 @@ describe('funciones de PRESCOM en la interfaz', () => {
     await page.waitForTimeout(300);
     expect(await id('aviso').innerText()).toContain('copiada');
     // Windows devuelve el texto con saltos \r\n: debe reconocerse igual como la partida copiada (con su análisis)
-    await page.evaluate(async () => navigator.clipboard.writeText((await navigator.clipboard.readText()).replace(/\n/g, '\r\n')));
+    await page.evaluate(async () => navigator.clipboard.writeText(`${(await navigator.clipboard.readText()).replace(/\n/g, '\r\n').replace(/(\d),(\d)/g, '$1.$2')}\r\n`));
     await id('nuevo-modulo').click();
     await page.keyboard.press('Control+v');
     await expect.poll(() => id('fila-partida').count()).toBe(1);

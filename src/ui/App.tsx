@@ -72,16 +72,18 @@ async function pegarPartidasDelPortapapeles() {
   let texto = '';
   try { texto = await navigator.clipboard.readText(); } catch { /* sin acceso */ }
   const despues = proyecto.partidas[seleccion]?.modulo === m ? seleccion : undefined;
-  // Windows cambia los saltos de línea del portapapeles (\r\n): se comparan normalizados
-  const igual = (a: string, b: string) => a.replace(/\r\n?/g, '\n').trim() === b.replace(/\r\n?/g, '\n').trim();
-  if (portapapeles && (!texto.trim() || igual(texto, textoCopiado))) {
+  const filas = partidasDesdeTabla(texto);
+  // ¿El portapapeles tiene lo que se copió en Civix? Se compara por las descripciones (Windows puede cambiar saltos de
+  // línea u otros detalles del texto); así la partida se pega con su análisis y no como fila de Excel.
+  const propias = !!portapapeles && (!texto.trim() || texto === textoCopiado ||
+    (filas.length === portapapeles.partidas.length && filas.every((f, k) => f.descripcion === portapapeles!.partidas[k]!.descripcion.slice(0, 70))));
+  if (portapapeles && propias) {
     const c = portapapeles;
     let pos: number[] = [];
     cambiar((p) => { pos = pegarPartidas(p, c, m, despues); }, `${c.partidas.length} partida(s) pegada(s)`);
     elegirPartida(pos[0] ?? -1);
     return;
   }
-  const filas = partidasDesdeTabla(texto);
   if (!filas.length) { avisar('No hay nada para pegar: copie una partida, o filas de Excel con descripción, unidad, cantidad y precio unitario'); return; }
   cambiar((p) => { for (const f of filas) nuevaPartidaDirecta(p, m, f); }, `${filas.length} partida(s) pegada(s) desde Excel (con precio directo)`);
 }
