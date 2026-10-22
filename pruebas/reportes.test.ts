@@ -81,3 +81,13 @@ const hay = !!RAIZ && existsSync(join(RAIZ, 'proyectos'));
     expect(r.reduce((a, x) => a + x.porcentaje, 0)).toBeCloseTo(100, 6);
   });
 });
+
+describe('formato de números', () => {
+  it('redondea como el cálculo (11,315 → 11,32) y no muestra «-0,00»', async () => {
+    const { num } = await import('../src/reportes/formato');
+    expect(num(11.315)).toBe('11,32');
+    expect(num(1234567.891)).toBe('1.234.567,89');
+    expect(num(-0.001)).toBe('0,00');
+    expect(num(-2.5, 1)).toBe('-2,5');
+  });
+});

@@ -1,0 +1,79 @@
+{
+ "_nota": "rangos: componente del cómputo → 1.º y último análisis (base 1, en el orden impreso del documento) entre los que se busca su análisis; el componente 1 no tiene rango (busca en todos). enlaces: «componente|inicio de la descripción» → n.º de análisis, para los nombres que no se parecen (excavación con maquinaria = con retroexcavadora).",
+ "rangos": {
+  "2": [
+   26,
+   58
+  ],
+  "3": [
+   48,
+   54
+  ],
+  "4": [
+   55,
+   58
+  ],
+  "5": [
+   59,
+   65
+  ],
+  "6": [
+   66,
+   71
+  ],
+  "7": [
+   72,
+   78
+  ],
+  "8": [
+   79,
+   84
+  ],
+  "9": [
+   85,
+   91
+  ],
+  "10": [
+   92,
+   96
+  ],
+  "11": [
+   97,
+   117
+  ],
+  "12": [
+   118,
+   131
+  ],
+  "13": [
+   132,
+   138
+  ],
+  "14": [
+   139,
+   155
+  ],
+  "15": [
+   1,
+   8
+  ],
+  "16": [
+   9,
+   25
+  ],
+  "17": [
+   156,
+   162
+  ]
+ },
+ "enlaces": {
+  "2|EXCAVACIÓN DE ZANJAS CON MAQUINARIA": 33,
+  "11|EXCAVACIÓN CON EQUIPO": 98,
+  "12|EXCAVACIÓN CON EQUIPO": 119,
+  "14|EXCAVACIÓN DE LA ZANJA": 140,
+  "5|EXCAVACIÓN MANUAL": 60,
+  "5|PROV. COLOC REJILLA": 64,
+  "16|PUERTA DE MADERA": 22,
+  "16|MURO DE LADRILLO": 14
+ }
+}

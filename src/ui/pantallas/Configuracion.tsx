@@ -84,8 +84,13 @@ export function ConfiguracionPantalla() {
       </section>
       <section><h3>Parámetros de cálculo del precio unitario</h3>
         <label className="campo">Plantilla predefinida
-          <Dropdown value={p.plantilla.nombre} selectedOptions={[p.plantilla.nombre]} data-testid="cfg-plantilla" onOptionSelect={(_, d) => { const pl = PLANTILLAS_PREDEFINIDAS.find((x) => x.nombre === d.optionValue); if (pl) cambiar((x) => { x.plantilla = structuredClone(pl); }, `Plantilla «${pl.nombre}» aplicada`); }}>
+          <Dropdown value={p.plantilla.nombre} selectedOptions={[p.plantilla.nombre]} data-testid="cfg-plantilla" onOptionSelect={(_, d) => { const pl = PLANTILLAS_PREDEFINIDAS.find((x) => x.nombre === d.optionValue); if (pl) cambiar((x) => { const dc = x.plantilla.decimalesCalculo; x.plantilla = structuredClone(pl); if (dc !== undefined) x.plantilla.decimalesCalculo = dc; }, `Plantilla «${pl.nombre}» aplicada`); }}>
             {PLANTILLAS_PREDEFINIDAS.map((x) => <Option key={x.nombre} value={x.nombre}>{x.nombre}</Option>)}
+          </Dropdown></label>
+        <label className="campo" title="Como en PRESCOM: redondea el costo de cada insumo del análisis (cantidad × precio) a estos decimales antes de sumarlo.">Decimales de cálculo
+          <Dropdown value={p.plantilla.decimalesCalculo === undefined ? 'Sin redondeo' : String(p.plantilla.decimalesCalculo)} selectedOptions={[String(p.plantilla.decimalesCalculo ?? 'no')]} data-testid="cfg-decimales-calculo"
+            onOptionSelect={(_, d) => cambiar((x) => { if (d.optionValue === 'no') delete x.plantilla.decimalesCalculo; else x.plantilla.decimalesCalculo = Number(d.optionValue); }, d.optionValue === 'no' ? 'Cálculo sin redondeo intermedio' : `Cálculo redondeado a ${d.optionValue} decimales`)}>
+            <Option value="no">Sin redondeo</Option>{[0, 1, 2, 3, 4].map((k) => <Option key={k} value={String(k)}>{String(k)}</Option>)}
           </Dropdown></label>
         <table className="grilla" data-testid="tabla-parametros"><thead><tr><th style={{ width: 40 }}></th><th>Descripción</th><th style={{ width: 100 }}>%</th><th style={{ width: 160 }}>Fórmula</th></tr></thead><tbody>
           {p.plantilla.parametros.map((q, k) => (

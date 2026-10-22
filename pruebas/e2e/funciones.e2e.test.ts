@@ -151,4 +151,15 @@ describe('funciones de PRESCOM en la interfaz', () => {
     expect(await marco.locator('section.lote').count()).toBe(5);
     expect(errores).toEqual([]);
   });
+
+  it('Configuración: «decimales de cálculo» redondea el costo de cada línea del análisis y se puede quitar', async () => {
+    const t0 = await total();
+    await id('pestana-config').click();
+    await id('cfg-decimales-calculo').click(); await page.getByRole('option', { name: '0', exact: true }).click();
+    const t1 = await total();
+    expect(t1).not.toBe(t0); // 0,8 hr × 18 = 14,4 pasa a 14
+    await id('cfg-decimales-calculo').click(); await page.getByRole('option', { name: 'Sin redondeo' }).click();
+    expect(await total()).toBe(t0);
+    expect(errores).toEqual([]);
+  });
 });

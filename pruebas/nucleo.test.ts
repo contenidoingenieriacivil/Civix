@@ -69,3 +69,22 @@ describe('monto en literal', () => {
     expect(montoALiteral(280_800.00)).toBe('Son: Doscientos ochenta mil ochocientos 00/100 Bolivianos');
   });
 });
+
+describe('decimales de cálculo (PRESCOM)', () => {
+  // «Replanteo y trazado de una superficie» del documento Tolomosita Sud, impreso por PRESCOM con 2 decimales de cálculo:
+  // D 2,42 · G 1,91 · I 5,32 · J 9,64 · N 11,67 · Q 12,03 (clavos 12,5 × 0,01 = 0,125 → 0,13; estuco 0,68 × 0,07 → 0,05)
+  const m = new Map([[1, 8], [2, 12], [3, 12.5], [4, 0.68], [5, 19.5], [6, 14], [7, 20], [8, 0.87]].map(([id, p]) => [id!, ins(id!, id! <= 4 ? 'M' : id! <= 7 ? 'O' : 'E', p!)]));
+  const item: Item = {
+    id: 1, descripcion: 'Replanteo', unidad: 'm²', grupo: 0,
+    materiales: [{ insumo: 1, rendimiento: 0.25 }, { insumo: 2, rendimiento: 0.02 }, { insumo: 3, rendimiento: 0.01 }, { insumo: 4, rendimiento: 0.07 }],
+    manoObra: [{ insumo: 5, rendimiento: 0.02 }, { insumo: 6, rendimiento: 0.02 }, { insumo: 7, rendimiento: 0.02 }], equipo: [{ insumo: 8, rendimiento: 6 }],
+  };
+  it('redondea el costo de cada línea, no los parámetros', () => {
+    const v = calcularItem(item, m, { ...PLANTILLA_SABS, decimalesCalculo: 2 }).valores;
+    expect(v.D).toBeCloseTo(2.42, 9);
+    expect(redondear(v.J!, 2)).toBe(9.64); // con D, G, I redondeados daría 9,65
+    expect(redondear(v.N!, 2)).toBe(11.67);
+    expect(redondear(v.Q!, 2)).toBe(12.03);
+    expect(redondear(calcularItem(item, m, PLANTILLA_SABS).valores.Q!, 2)).toBe(12.02); // sin la opción
+  });
+});

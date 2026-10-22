@@ -53,12 +53,14 @@ export function sumaRubros(
   insumos: ReadonlyMap<number, Insumo>,
   incluirNoProductivos = false,
   decimalesPrecios = DECIMALES_PRECIOS,
+  decimalesCalculo?: number,
 ): Record<Rubro, number> {
   const suma = (lineas: Item['materiales']) =>
     lineas.reduce((acc, l) => {
       const i = insumos.get(l.insumo);
       if (!i || (i.noProductivo && !incluirNoProductivos)) return acc;
-      return acc + redondear(i.precio, decimalesPrecios) * l.rendimiento;
+      const costo = redondear(i.precio, decimalesPrecios) * l.rendimiento;
+      return acc + (decimalesCalculo === undefined ? costo : redondear(costo, decimalesCalculo));
     }, 0);
   return { M: suma(item.materiales), O: suma(item.manoObra), E: suma(item.equipo) };
 }
@@ -110,7 +112,7 @@ export function calcularItem(
   decimalesPrecios = DECIMALES_PRECIOS,
 ): ResultadoApu {
   if (item.precioFijo !== undefined) return { valores: { Q: item.precioFijo }, precioUnitario: redondear(item.precioFijo, decimales) };
-  const valores = evaluarPlantilla(plantilla, sumaRubros(item, insumos, incluirNoProductivos, decimalesPrecios), item.porcentajes);
+  const valores = evaluarPlantilla(plantilla, sumaRubros(item, insumos, incluirNoProductivos, decimalesPrecios, plantilla.decimalesCalculo), item.porcentajes);
   return { valores, precioUnitario: redondear(valores.Q ?? 0, decimales) };
 }
 

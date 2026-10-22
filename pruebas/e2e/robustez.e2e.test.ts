@@ -59,6 +59,7 @@ afterAll(async () => { await navegador?.close(); await new Promise((r) => servid
 describe('robustez: ningún campo rompe la aplicación', () => {
   const casos: [string, () => [unknown, unknown]][] = [['proyecto de prueba', () => [BASE, PROYECTO]]];
   if (REF && existsSync(join(REF, 'tesis-base.json'))) casos.push(['tesis Tolomosa', () => [readFileSync(join(REF, 'tesis-base.json'), 'utf8'), readFileSync(join(REF, 'tesis-proyecto-gantt.json'), 'utf8')]]);
+  if (REF && existsSync(join(REF, 'tolomosita-base.json'))) casos.push(['tesis Tolomosita Sud', () => [readFileSync(join(REF, 'tolomosita-base.json'), 'utf8'), readFileSync(join(REF, 'tolomosita-proyecto.json'), 'utf8')]]);
   for (const [nombre, datos] of casos) it(`todas las pantallas con ${nombre}`, async () => {
     const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();

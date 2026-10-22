@@ -22,6 +22,8 @@ export interface PaqueteProyecto {
     memo?: string;
     /** Días laborables por semana (7 = calendario corrido) y horas por día del cronograma. */
     diasLaborables?: number | string; horasDia?: number | string;
+    /** Decimales de cálculo de PRESCOM (0…4): redondea el costo de cada línea del análisis antes de sumarlo. */
+    decimalesCalculo?: number | string;
   };
   modulos: {
     nombre: string;
@@ -71,6 +73,11 @@ export function importarProyecto(entrada: unknown, bases: BaseDatos[]): { proyec
   p.modulos = [];
   const dl = n(d.diasLaborables), hd = n(d.horasDia);
   if (dl || hd) p.cronograma = { ...CRONOGRAMA_DEFECTO, ...(dl && dl >= 1 && dl <= 7 ? { diasLaborables: Math.round(dl) } : {}), ...(hd && hd > 0 && hd <= 24 ? { horasDia: hd } : {}) };
+  const dc = n(d.decimalesCalculo);
+  if (dc !== undefined) {
+    if (dc === null || !Number.isInteger(dc) || dc < 0 || dc > 4) informe.errores.push(`decimalesCalculo: "${d.decimalesCalculo}" debe ser un entero de 0 a 4`);
+    else p.plantilla.decimalesCalculo = dc;
+  }
   for (const o of d.parametros ?? []) {
     const q = sinAcentos(String(o.parametro));
     const par = p.plantilla.parametros.find((x) => x.letra.toLowerCase() === q) ?? p.plantilla.parametros.find((x) => x.descripcion && sinAcentos(x.descripcion).includes(q));
@@ -152,4 +159,5 @@ Reglas:
 - Cantidad: usa "cantidad" (total) o "computo" (líneas con veces, largo, ancho, alto; Civix multiplica lo informado y suma las líneas). Las unidades deben ser coherentes (m → largo; m² → largo×ancho; m³ → largo×ancho×alto).
 - Cronograma: "duracion" son días (admite decimales, p. ej. 3.17; obligatorio si la partida no tiene análisis con mano de obra); "predecesor" es la posición de la partida previa en su módulo (0 = empieza con el módulo). Para el módulo, "despuesDe" es el número del módulo tras cuyo fin empieza (si no se indica, empieza al terminar el anterior) y en "proyecto" puede ir "diasLaborables" (7 = calendario corrido). Si el documento trae el cronograma (MS Project, Excel), úsalo; si no, omite estos campos y no los inventes.
 - Respeta el orden y los módulos (capítulos) de mi presupuesto. No cambies descripciones. Números con punto decimal.
-- "plantilla": "Normas básicas del SABS" (licitaciones públicas, con IVA 14,94 % e IT 3,09 %), "Costo directo" o "Formato completo más IVA".`;
+- "plantilla": "Normas básicas del SABS" (licitaciones públicas, con IVA 14,94 % e IT 3,09 %), "Costo directo" o "Formato completo más IVA".
+- "decimalesCalculo": solo si el documento es de PRESCOM y en sus análisis cada parcial de insumo (cantidad × precio) está redondeado a 2 decimales; entonces pon 2. Si no, omítelo.`;

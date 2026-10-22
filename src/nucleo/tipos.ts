@@ -59,6 +59,12 @@ export interface Parametro {
 export interface Plantilla {
   nombre: string;
   parametros: Parametro[];
+  /**
+   * «Decimales de cálculo» de PRESCOM: si se indica, el costo de cada insumo del análisis (rendimiento × precio) se
+   * redondea a esos decimales antes de sumarlo; los parámetros D…Q se calculan sin redondeo intermedio (solo se
+   * muestran redondeados). Comprobado con 162 análisis impresos por PRESCOM. Sin indicar, no se redondean las líneas.
+   */
+  decimalesCalculo?: number;
 }
 
 export type ValoresParametros = Record<string, number>;

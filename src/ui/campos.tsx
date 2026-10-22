@@ -1,6 +1,7 @@
 import { Component, useState, type ReactNode } from 'react';
 import { avisar, deshacer } from './almacen';
 import { num } from '../reportes/formato';
+import { redondear } from '../nucleo/calculo';
 
 /** Convierte lo escrito («1.234,56», «1234.5», «12,5») a número; null si no es un número. */
 export function leerNumero(t: string): number | null {
@@ -18,7 +19,7 @@ export function Numero({ valor, alCambiar, alVaciar, decimales = 2, ancho = 90, 
   decimales?: number; ancho?: number; id?: string; min?: number; max?: number; titulo?: string;
 }) {
   const [texto, setTexto] = useState<string | null>(null);
-  const mostrar = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? v.toFixed(decimales).replace('.', ',') : '');
+  const mostrar = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? redondear(v, decimales).toFixed(decimales).replace('.', ',') : '');
   const confirmar = () => {
     if (texto === null) return;
     const n = leerNumero(texto);

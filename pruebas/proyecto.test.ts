@@ -125,3 +125,13 @@ describe('proyecto con precios directos: qué falta y cómo lo dice cada formula
     expect(formularioA8(directo)).toContain('Plazos incompletos');
   });
 });
+
+describe('decimalesCalculo en el paquete de proyecto', () => {
+  it('se aplica a la plantilla y se rechaza un valor inválido', async () => {
+    const { importarProyecto } = await import('../src/ia/proyecto');
+    const paq = (d: unknown) => ({ civix: 1, tipo: 'proyecto', proyecto: { nombre: 'X', decimalesCalculo: d }, modulos: [{ nombre: 'M', partidas: [{ descripcion: 'P', unidad: 'glb', cantidad: 1, precioUnitario: 10 }] }] });
+    expect(importarProyecto(paq(2), []).proyecto!.plantilla.decimalesCalculo).toBe(2);
+    expect(importarProyecto(paq(7), []).informe.errores[0]).toMatch(/decimalesCalculo/);
+    expect(importarProyecto(paq(1.5), []).informe.errores[0]).toMatch(/decimalesCalculo/);
+  });
+});

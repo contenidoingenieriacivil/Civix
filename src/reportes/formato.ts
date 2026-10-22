@@ -1,8 +1,12 @@
-/** Formato numérico boliviano: miles con punto y decimales con coma (1.234,56). */
+import { redondear } from '../nucleo/calculo';
+
+/** Formato numérico boliviano: miles con punto y decimales con coma (1.234,56). Redondea como el cálculo (11,315 → 11,32;
+ *  toFixed daría 11,31 por la coma flotante y la fila no cuadraría con su parcial). */
 export function num(x: number, decimales = 2): string {
-  const [e, d = ''] = Math.abs(x).toFixed(decimales).split('.');
+  const r = redondear(Math.abs(x), decimales);
+  const [e, d = ''] = r.toFixed(decimales).split('.');
   const miles = e!.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return `${x < 0 ? '-' : ''}${miles}${decimales ? ',' + d : ''}`;
+  return `${x < 0 && r !== 0 ? '-' : ''}${miles}${decimales ? ',' + d : ''}`;
 }
 
 /** Nombre del insumo para imprimir: sin la marca «[Bs 95,00]» que distingue variantes de precio de un mismo insumo. */
